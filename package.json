@@ -1,0 +1,54 @@
+{
+  "name": "markwatch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-only domain trademark enforcement workbench",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run check:licenses && tsc --noEmit -p . && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit -p .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test --project=mocked",
+    "test:live": "MARKWATCH_LIVE=1 playwright test --project=live",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "update-bootstrap": "node scripts/update-bootstrap.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "punycode": "2.3.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tldts": "7.4.16",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.56.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "22.20.5",
+    "@types/punycode": "2.1.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "jsdom": "30.1.2",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
+  }
+}

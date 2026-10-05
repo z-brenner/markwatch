@@ -1,6 +1,6 @@
 # Markwatch — Implementation Plan
 
-Status: **draft for approval. I have written no app code.** Last updated 2026-10-05.
+Status: **approved 2026-10-05.** Decisions: Q1 = (a) build-time allowlist generated from the IANA bootstrap; Q2 = the proposed routes are approved; Q3 = US only; Q4 = runtime template import, saved in the case file. All non-blocking defaults are accepted.
 
 Markwatch is a static, local-only workbench for domain trademark enforcement. The user enters a mark, a primary domain and an inventory. Markwatch finds lookalike domains, separates the user's own domains from everyone else's, works out who can act on each one, recommends a remedy and drafts the paperwork from templates. Nothing is sent automatically and nothing is persisted unless the user exports a case file.
 
