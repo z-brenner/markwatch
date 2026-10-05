@@ -7,7 +7,7 @@
 // hash depends on the previous one.
 import { appendAudit, exportCaseZip, importCaseZip, newCaseState } from '../core/casefile';
 import { rulesetFingerprint, scoreDomain } from '../core/score/engine';
-import { RULES, RULESET_VERSION } from '../config/scoring.rules';
+import { RULESET_VERSION } from '../config/scoring.rules';
 import { buildFacts } from '../pipeline/facts';
 import { nowUtc, sha256Hex } from '../core/util';
 import { DEFAULT_DICTIONARY, RISKY_KEYWORDS } from '../config/keywords';

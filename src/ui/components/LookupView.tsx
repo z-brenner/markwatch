@@ -47,7 +47,7 @@ function summarize(r: LookupResult<unknown>): string {
   if (r.kind === 'abuse' && Array.isArray(d)) return (d as string[]).join(', ');
   if (r.kind === 'ct' && Array.isArray(d)) return `${d.length} certificate(s)`;
   if (r.kind === 'rdap-domain' && d && !Array.isArray(d)) {
-    const x = d as RdapDomain;
+    const x = d as unknown as RdapDomain;
     return [x.registrar?.name, x.registered && `registered ${x.registered.slice(0, 10)}`].filter(Boolean).join(' · ') || 'RDAP record';
   }
   if (r.kind === 'rdap-ip' && d && !Array.isArray(d)) {
