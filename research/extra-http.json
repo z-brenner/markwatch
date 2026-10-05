@@ -1,0 +1,230 @@
+{
+ "mode": "http",
+ "pageUrl": "http://localhost:36867/",
+ "secure": {
+  "isSecureContext": true,
+  "origin": "http://localhost:36867",
+  "subtle": true
+ },
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36",
+ "results": [
+  {
+   "id": "verisign-404",
+   "url": "https://rdap.verisign.com/com/v1/domain/this-should-not-exist-mw-8f3k2.com",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.verisign.com/com/v1/domain/this-should-not-exist-mw-8f3k2.com",
+   "ms": 450,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "google-reg-404",
+   "url": "https://pubapi.registry.google/rdap/domain/this-should-not-exist-mw-8f3k2.app",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://pubapi.registry.google/rdap/domain/this-should-not-exist-mw-8f3k2.app",
+   "ms": 464,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-io",
+   "url": "https://rdap.org/domain/google.io",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.io",
+   "ms": 515,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-co",
+   "url": "https://rdap.org/domain/google.co",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.co",
+   "ms": 618,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-me",
+   "url": "https://rdap.org/domain/google.me",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.me",
+   "ms": 656,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "identitydigital-404",
+   "url": "https://rdap.identitydigital.services/rdap/domain/this-should-not-exist-mw-8f3k2.info",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.identitydigital.services/rdap/domain/this-should-not-exist-mw-8f3k2.info",
+   "ms": 660,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-de",
+   "url": "https://rdap.org/domain/google.de",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.de",
+   "ms": 666,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-us",
+   "url": "https://rdap.org/domain/google.us",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.us",
+   "ms": 682,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-eu",
+   "url": "https://rdap.org/domain/google.eu",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.org/domain/google.eu",
+   "ms": 722,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "pir-404",
+   "url": "https://rdap.publicinterestregistry.org/rdap/domain/this-should-not-exist-mw-8f3k2.org",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.publicinterestregistry.org/rdap/domain/this-should-not-exist-mw-8f3k2.org",
+   "ms": 924,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "centralnic-404",
+   "url": "https://rdap.centralnic.com/xyz/domain/this-should-not-exist-mw-8f3k2.xyz",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.centralnic.com/xyz/domain/this-should-not-exist-mw-8f3k2.xyz",
+   "ms": 978,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdaporg-ip",
+   "url": "https://rdap.org/ip/8.8.8.8",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.arin.net/registry/ip/8.8.8.8",
+   "ms": 1198,
+   "net": [
+    {
+     "status": 302,
+     "acao": "*",
+     "location": "https://rdap.arin.net/registry/ip/8.8.8.8"
+    }
+   ]
+  },
+  {
+   "id": "nominet-404",
+   "url": "https://rdap.nominet.uk/uk/domain/this-should-not-exist-mw-8f3k2.uk",
+   "js": "readable",
+   "status": 404,
+   "finalUrl": "https://rdap.nominet.uk/uk/domain/this-should-not-exist-mw-8f3k2.uk",
+   "ms": 815,
+   "net": [
+    {
+     "status": 404,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "crtsh-identity",
+   "url": "https://crt.sh/?Identity=%25paypal%25&output=json&exclude=expired",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://crt.sh/?Identity=%25paypal%25&output=json&exclude=expired",
+   "ms": 3586,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "crtsh-again",
+   "url": "https://crt.sh/?q=%25github%25&output=json",
+   "js": "timeout",
+   "error": "AbortError: signal is aborted without reason",
+   "ms": 20001,
+   "net": null
+  }
+ ]
+}
