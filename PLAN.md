@@ -179,13 +179,13 @@ Every lookup, classification, dismissal and export goes into the audit log.
 | `https://cloudflare-dns.com/dns-query?name=…&type=…` + `accept: application/dns-json` | DoH (primary) | ✅ `ACAO: *`, both from localhost and file:// | The `ct=application/dns-json` query-param variant returned **400**; use the Accept header. The IP-literal `https://1.1.1.1/dns-query` was reset by the sandbox proxy, and we don't need it. |
 | `https://dns.google/resolve?name=…&type=…` | DoH (fallback) | ✅ `ACAO: *` | NXDOMAIN comes back readable as `Status: 3`. |
 | Abusix `…<reversed-ip>.abuse-contacts.abusix.zone TXT`, queried **via the DoH endpoints above** | Network abuse contact | ✅ (via DoH) | No extra host in connect-src. It does disclose the IP to the DoH resolver and to Abusix's nameservers. Terms: see §16 Q5. |
-| `https://crt.sh/?q=%25<mark>%25&output=json` | CT substring search | ⚠️ `ACAO: *`, but **unreliable** | The same query timed out after 20 s in one run and returned in about 1 s in another. A large-result query (`%github%`) timed out. `Identity=…&exclude=expired` returned in 3.6 s. Plan: `exclude=expired`, a 60 s timeout, one retry, then the manual fallback. |
+| `https://crt.sh/?q=%25<mark>%25&output=json` | CT substring search | ⚠️ `ACAO: *`, but **unreliable** | The same query timed out after 20 s in one run and returned in about 1 s in another. A large-result query (`%github%`) timed out. `Identity=…&exclude=expired` returned in 3.6 s. The operator's announced limit is **5 requests per minute per IP** (crtsh Google Group, Jun 2023). 502 responses are common and carry no CORS header. Plan: one query per seed, at least 12 s apart, `exclude=expired`, a 60 s timeout, one retry, then the manual fallback. I found no verified free alternative with substring search; Cert Spotter matches exact domains only. |
 | `https://data.iana.org/rdap/{dns,ipv4,ipv6,asn}.json` | RDAP bootstrap | ✅ `ACAO: *` | Fetched at runtime to detect drift against the bundled snapshot. |
 | **379 domain-RDAP servers** from the IANA bootstrap (1,203 TLDs) | Domain RDAP | ✅ **349 to 352 of 379** on the success path | `research/rdap-cors-sweep.json` has every host. Results for .com/.net (Verisign), .org (PIR), Identity Digital (about 450 TLDs including .info and .ai), CentralNic, Google Registry, Radix, Nominet, .fr, .nl, .ca, .br and .in were all readable, **including their 404 "not found" responses**. |
 | Failing on this run (25 hosts, 71 TLDs) | | ❌ | **GMO Registry (.shop and 45 brand TLDs)** and **.au**: HTTP 429 with no CORS header (.au sent `retry-after: 22627`). **CORE-operated TLDs** (.cat, .scot, .eus, .bayern…) and .si: upstream 502 with no CORS header. **TWNIC** (.tw): 426. **.fj**: 404 with no CORS header. .tz: no response. **.kg and .mg are `http://`-only**, so they are excluded as mixed content. In every case curl saw `ACAO: *` on a 200, which is exactly the "terminal proves nothing" trap: **error responses often omit CORS headers.** |
 | TLDs with **no RDAP in the IANA bootstrap** | | n/a | **.io, .co, .de, .us, .eu, .me, .jp, .cn** and others. `rdap.org` returns 404 for them too. The UI shows "No RDAP service for .xx", a link to the registry's web WHOIS, and the paste box. These must never read as "unregistered". |
 | RIR RDAP: `rdap.arin.net`, `rdap.db.ripe.net`, `rdap.apnic.net`, `rdap.lacnic.net`, `rdap.afrinic.net` | IP owner and abuse contact | ✅ all five, IPv4 and IPv6 | ARIN answers 303 for non-ARIN space and LACNIC answers 307 to `rdap.registro.br`. Both redirects carry `ACAO: *`, but the targets must be in connect-src. |
-| Registrar RDAP (GoDaddy, MarkMonitor, Namecheap tested) | Registrar-level detail | ✅ on the 3 tested | Not needed by default. The registry response already includes the registrar's abuse contact (§16 Q-legal). Registrar hosts number in the hundreds and are not in the bootstrap, so they would be link-out only unless Q1 says otherwise. |
+| Registrar RDAP (GoDaddy, MarkMonitor, Namecheap tested) | Registrar-level detail | ✅ on the 3 tested | Not needed by default. The registry response already includes the registrar's abuse contact (§17: RDAP Response Profile §2.4.5). Registrar hosts number in the hundreds and are not in the bootstrap, so they would be link-out only unless Q1 says otherwise. |
 | `https://rdap.org/…` | Redirector | ✅ | Not used. It would add a third party that sees every query, and its redirect targets still have to be in the CSP. |
 | `https://example.com/` | (sanity check) | ❌ no ACAO | Expected. Markwatch never fetches websites. Page capture needs the companion process. |
 
@@ -262,11 +262,13 @@ The NS query is made **at the registrable domain** (§2 of the spec).
   - registrant org and country when not redacted
   - redaction markers (RFC 9537)
 - A per-host budget as in §4. Results are cached **in memory for the session only**.
+- RDAP is queried only for domains that resolved as registered, plus verification the user triggers. Verisign's and PIR's RDAP terms prohibit high-volume automated querying, and RIPE caps personal-data objects at 1,000 per day per IP. Running RDAP across all 5,000 candidates is therefore ruled out by design, not only for speed.
 
 ### 6.3 IP owner and abuse contacts
 
 - IP RDAP is routed from the IANA ipv4/ipv6 bootstrap. Extracted: the network name, the org entity, and the **abuse** role's email.
-- Abusix TXT over DoH is a second source. Both are shown, each with its source. When they disagree, both are presented and neither is picked automatically.
+- Abusix TXT over DoH is a second source. The query name is the reversed IPv4 octets or the reversed IPv6 nibbles, plus `.abuse-contacts.abusix.zone`. Quotes must be stripped, because Cloudflare returns them and Google does not. Both sources are shown, each labelled. When they disagree, both are presented and neither is picked automatically.
+- Abusix asks users to credit the database in their reports, so templates add a source line whenever an Abusix contact is used.
 
 ### 6.4 Provider inference (from `config/providers.ts`, editable)
 
@@ -315,12 +317,12 @@ The user picks a class. Markwatch then recommends a route, shows **why**, lists 
 
 | Class | Recommended route | Templates unlocked | Hard rules |
 |---|---|---|---|
-| Phishing or malware | Registrar abuse report (registry-RDAP abuse contact) and host abuse report (IP-RDAP / Abusix). Behind a CDN: the CDN's abuse form. Also listed as link-outs: registry abuse contact, browser blocklists (Google Safe Browsing, Microsoft), APWG. | registrar-abuse, host-abuse, RDRS | Urgent banner. Recommends evidence capture before reporting. |
-| Copied content | DMCA notice to the host (and CDN). | dmca, host-abuse | **A banner that cannot be dismissed: "The DMCA covers copyright, not trademark. Use this only for copied text, images or code you own."** Also: a § 512(f) misrepresentation warning and a *Lenz* fair-use-consideration checkbox, which is logged. |
-| Cybersquatting, no content | Demand letter to the registrant (via RDRS if redacted). Escalation: UDRP; URS for new gTLDs; the ccTLD's own DRP; ACPA (US). | demand-letter, RDRS, udrp-annex | Shows the domain's registration date next to the user's mark-rights date, if entered, with a warning about **Reverse Domain Name Hijacking** risk when the domain is older than the mark. |
-| Parked with ads | **Proposed:** a trademark complaint to the parking provider to get the ads removed (fast and cheap), then a demand letter. Escalation: UDRP. PPC ads on a confusing domain are bad-faith evidence. | demand-letter, RDRS, udrp-annex | Parking provider identified from NS. |
-| Offered for sale | **Proposed:** capture the evidence first, then a decision card. Option A: buy anonymously through a broker (business decision; compare against UDRP fees). Option B: UDRP. An offer to sell above out-of-pocket costs is listed bad-faith evidence under UDRP ¶4(b)(i). **The demand letter is shown with a caution:** contact can raise the price and an inquiry can look like a negotiation. | udrp-annex, RDRS, demand-letter (with caution) | — |
-| Possible fair use or criticism | **No outbound template until the user records that counsel has been consulted** (logged acknowledgment). Warning cites *Lamparello v. Falwell*, *Bosley v. Kremer*, *Taubman v. Webfeats* and UDRP ¶4(c)(iii). Also notes the risk of declaratory-judgment or anti-SLAPP exposure and Streisand effects. | internal-note only until acknowledged | Hard lock. |
+| Phishing or malware | Registrar abuse report (registry-RDAP abuse contact) and host abuse report (IP-RDAP / Abusix). Behind a CDN: the CDN's abuse form. Also listed as link-outs: registry abuse contact, browser blocklists (Google Safe Browsing, Microsoft), APWG. | registrar-abuse, host-abuse, disclosure-request | Urgent banner. Recommends evidence capture before reporting. |
+| Copied content | DMCA notice to the host's designated agent (and the CDN's). | dmca, host-abuse | **A banner that cannot be dismissed: "The DMCA covers copyright, not trademark. Use this only for copied text, images or code you own."** Also: a § 512(f) misrepresentation warning and a *Lenz* fair-use-consideration checkbox, which is logged. |
+| Cybersquatting, no content | Demand letter to the registrant (via RDRS or a Registration Data Policy §10 request if the registrant is redacted). Escalation: UDRP; **URS** where it applies (all post-2012 gTLDs plus .org, .info and .biz, but **not .com or .net**; suspension only, under a clear-and-convincing standard); the ccTLD's own DRP; ACPA (US). The UI works out URS eligibility from the TLD. | demand-letter, disclosure-request, udrp-annex | Shows the domain's registration date next to the user's mark-rights date, if entered, with a warning about **Reverse Domain Name Hijacking** risk when the domain is older than the mark. |
+| Parked with ads | **Proposed:** a trademark complaint to the parking provider to get the ads removed (fast and cheap), then a demand letter. Escalation: UDRP (WIPO Overview 3.0 §2.9 and §3.5: PPC links on a confusing domain). Sedo and GoDaddy (CashParking and Afternic) have documented IP-complaint processes. Bodis shut down in Jan 2026 and Dan.com was folded into Afternic. | demand-letter, disclosure-request, udrp-annex | Parking provider identified from NS. |
+| Offered for sale | **Proposed:** capture the evidence first, then a decision card. Option A: buy anonymously through a broker (business decision; compare against UDRP fees). Option B: UDRP. An offer to sell above out-of-pocket costs is listed bad-faith evidence under UDRP ¶4(b)(i). **The demand letter is shown with a caution:** contact can raise the price and an inquiry can look like a negotiation. | udrp-annex, disclosure-request, demand-letter (with caution) | — |
+| Possible fair use or criticism | **No outbound template until the user records that counsel has been consulted** (logged acknowledgment). Warning cites *Lamparello v. Falwell*, *Bosley v. Kremer*, *Taubman v. Webfeats*, UDRP ¶4(c)(iii) and WIPO Overview 3.0 §2.6 (criticism sites) and §2.7 (fan sites). Also notes the risk of declaratory-judgment or anti-SLAPP exposure and Streisand effects. | internal-note only until acknowledged | Hard lock. |
 | Authorized but noncompliant | Internal compliance note to the relationship owner. | compliance-note **only** | **Never** offers demand, DMCA, UDRP or abuse templates. Enforced in code and in a unit test. |
 | Unrelated | **Proposed:** no action. Record the reason and offer "add to an ignore list in this case". | none | — |
 
@@ -356,11 +358,11 @@ Trademark registration: {{mark.registrations | required: "Registration number(s)
 
 | Template | Notes |
 |---|---|
-| `registrar-abuse.md` | Cites the registrar's DNS-abuse obligations as placeholder text for counsel to confirm. |
+| `registrar-abuse.md` | Cites the registrar's DNS-abuse obligations as placeholder text for counsel to confirm (§17). |
 | `host-abuse.md` | IP, network, evidence list. |
 | `dmca-notice.md` | Contains all **six elements of 17 U.S.C. § 512(c)(3)(A)** as labeled sections: (i) signature; (ii) identification of the copyrighted work; (iii) identification of the infringing material and its location; (iv) contact information; (v) good-faith-belief statement; (vi) accuracy statement and, under penalty of perjury, authorization. Each element is a `required` field. |
 | `demand-letter.md` | Placeholder language only. Lists remedies sought as user-selected options; no threats are pre-written. |
-| `rdrs-request.md` | `channel: portal`. RDRS is a logged-in ICANN web portal, so the output is a field-by-field copy sheet plus the link, not an email. |
+| `disclosure-request.md` | One template, two channels. **(1) ICANN RDRS** (`channel: portal`). Output is a field-by-field copy sheet that matches the RDRS form, plus the link: category "IP holder", the data elements, a 2,000-character description with a live counter, the legal-basis choice, and up to 5 PDF attachments of 5 MB each. RDRS has no API and covers only participating gTLD registrars, not ccTLDs. **(2) Direct to the registrar** under Registration Data Policy §10, with the §10.2 minimum content as `required` fields. |
 | `udrp-annex-outline.md` | Evidence annex outline organized by the three UDRP ¶4(a) elements, auto-listing attached evidence by hash. |
 | `compliance-note.md` | Internal and neutral. Uses no legal-threat vocabulary, enforced by the same denylist test inverted. |
 
@@ -531,7 +533,7 @@ Each subagent works on disjoint files with a written spec and must run `npm test
 
 ### Non-blocking: I'll use these defaults unless you object
 
-- **Q5. Abusix.** Included as a secondary abuse-contact source over DoH. Pending the terms-of-use check in §17, I'll drop it if the terms don't allow commercial use.
+- **Q5. Abusix.** Included as a secondary abuse-contact source over DoH. Its terms say the service is free and "as is", may change at any time, and ask for credit in reports. **They do not explicitly address commercial use.** Default: on, with attribution, behind a setting. Tell me if your counsel wants it off.
 - **Q6. Resolver.** Cloudflare primary, Google only as fallback, so a typical run discloses to one resolver, not two. The user can switch in settings.
 - **Q7. Rules editing.** Developers edit `scoring.rules.ts`. The UI shows the rules read-only, and the case file records the ruleset hash. Runtime rule editing can come later.
 - **Q8. Browsers.** Chromium-based browsers (Chrome and Edge, the usual managed-enterprise browsers) are tested. Firefox and Safari are best-effort and untested in this environment.
@@ -542,4 +544,69 @@ Each subagent works on disjoint files with a written spec and must run `npm test
 
 ## 17. Legal and registry facts the templates and routes rely on
 
-*(Verified citations and service status. Filled in below.)*
+These were checked against primary sources on 2026-10-05 unless marked **[unverified]**. They feed UI help text and template placeholders. The templates still contain **no legal conclusions**: citations appear only as "consider" pointers for counsel.
+
+**Statutes, policy and cases**
+- **17 U.S.C. § 512(c)(3)(A)** lists the six elements of a DMCA notice. The template's element labels quote them verbatim (source: law.cornell.edu/uscode/text/17/512).
+- **§ 512(f)** makes a sender liable for knowingly and materially misrepresenting infringement. *Lenz v. Universal Music Corp.*, 815 F.3d 1145 (9th Cir. 2016) (amended opinion), requires the rights holder to consider fair use before sending. That is why the DMCA flow has a checkbox.
+- **15 U.S.C. § 1125(d)**, the ACPA, requires bad-faith intent to profit plus registering, trafficking in or using a confusingly similar domain.
+  - (d)(1)(B)(i) lists nine bad-faith factors.
+  - (B)(ii) is a safe harbor.
+  - (d)(2) allows an in rem action.
+- **§ 1117(d)** sets statutory damages of $1,000 to $100,000 per domain name.
+- **UDRP ¶4(a)** has three cumulative elements: confusing similarity, no rights or legitimate interests, and registration **and** use in bad faith.
+  - **¶4(b)** gives non-exclusive examples of bad faith, including (i) acquiring the domain to sell it for more than out-of-pocket costs and (iv) seeking commercial gain from confusion.
+  - **¶4(c)** covers the registrant's legitimate interests, including (iii) noncommercial or fair use.
+- **WIPO Jurisprudential Overview 3.0:**
+  - §2.6: criticism sites. Under 2.6.2, `<mark>.tld` is generally not protected; under 2.6.3, `<mark>sucks.tld` often is.
+  - §2.7: fan sites.
+  - §2.9: parked pages with PPC links.
+  - §3.1.1: offers to sell.
+  - §3.3: passive holding.
+  - §3.5: auto-generated PPC content.
+- **Criticism and gripe-site cases:** *Lamparello v. Falwell*, 420 F.3d 309 (4th Cir. 2005); *Bosley Medical Institute, Inc. v. Kremer*, 403 F.3d 672 (9th Cir. 2005); *Taubman Co. v. Webfeats*, 319 F.3d 770 (6th Cir. 2003).
+- **URS** (Procedure, 21 Feb 2024):
+  - Standard: clear and convincing evidence (§8.2).
+  - Remedy: **suspension only, never transfer** (§10.2, §10.4).
+  - Scope: every post-2012 gTLD, plus **.org, .info and .biz** under their 2019 renewals. **It does not apply to .com or .net.** Whether other legacy TLDs have adopted it is **[unverified]**.
+  - Cost: the Forum charges $375 for 1–14 domains (fee schedule dated Aug 2022; recheck before relying on it).
+
+**ICANN registration data**
+- **RDRS is still running.**
+  - The Board extended it for up to two years, to about Nov or Dec 2027 (Oct 2025 and Mar 2026 resolutions), and did not adopt the SSAD recommendations.
+  - **There is no API.** It is a logged-in portal at rdrs.icann.org.
+  - Participation is voluntary: 80 registrars, about 46% of domains, at the end of the pilot. **ccTLDs are not covered.**
+  - During the pilot, 26% of requests were approved and 55% denied.
+  - So the template steers the user to the direct §10 route when the registrar does not participate.
+- **The Registration Data Policy** took effect 21 Aug 2025 and was revised 12 May 2026. Under §10:
+  - Registrars must publish a disclosure-request process.
+  - §10.2 sets the minimum content of a request: identity and contact details, the data elements requested, the legal rights and rationale, a good-faith affirmation, and an agreement to process the data lawfully.
+  - Registrars must **acknowledge within 2 business days and respond within 30 calendar days** (§10.5).
+  - A denial must give a rationale (§10.6).
+  - The template works out the follow-up dates.
+- **The gTLD RDAP Response Profile v2.2, §2.4.5** says: "An RDAP server MUST include an entity with the abuse role within the registrar entity which MUST include tel and email members". This applies to registry responses too, so **a single registry RDAP call returns the registrar's abuse email and phone.** That is why Q1 option (c), registrar RDAP, is unnecessary.
+- **The 2024 DNS-abuse amendments to the RAA and Registry Agreement** are **[unverified by the research pass]**. The abuse-report template cites them only in a bracketed placeholder for counsel to confirm.
+
+**Operational limits that shape the design**
+- **crt.sh** allows 5 requests per minute per IP. 502s and timeouts are common, and there is no SLA.
+- **DoH resolvers:**
+  - Google DoH allows 1,500 QPS per IP, so it does not constrain us.
+  - Cloudflare publishes no number but may throttle "security scanning" patterns.
+  - Concurrency 8 is well inside both.
+- **RDAP and RIR limits:**
+  - **Verisign and PIR** RDAP terms prohibit high-volume automated querying, and PIR throttles per IP.
+  - **RIPE** allows 1,000 personal-data objects per day per IP.
+  - **ARIN** tarpits at roughly 5–10 queries per second (an informal figure).
+  - **LACNIC** allowed 10 per minute and 1,000 per hour in a 2016 deck; the current figure is **[unverified]**.
+- **Parking nameservers** for `config/parking.ts`:
+
+  | Provider | Nameservers |
+  |---|---|
+  | Sedo | `ns1/ns2.sedoparking.com` |
+  | Above | `ns1/ns2.abovedomains.com`; legacy `above.com` |
+  | GoDaddy CashParking | `ns01/ns02.cashparking.com` |
+  | Afternic | `ns1/ns2.afternic.com`; also covers `dan.com` NS |
+  | ParkingCrew | `ns1/ns2.parkingcrew.net` |
+  | Bodis | marked legacy; shut down Jan 2026 |
+
+  Trade press reports that Google withdrew ads from parked domains in 2025–26 **[unverified]**. If that is right, "parked with ads" will increasingly mean "parked and for sale".
