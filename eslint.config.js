@@ -54,6 +54,6 @@ export default tseslint.config(
     // Tests may install storage traps on these globals, so the source-level ban does not apply there.
     files: ['tests/**'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
-    rules: { 'no-restricted-globals': 'off', 'no-restricted-properties': 'off', 'react-hooks/rules-of-hooks': 'off' },
+    rules: { 'no-restricted-globals': 'off', 'no-restricted-properties': 'off', 'react-hooks/rules-of-hooks': 'off', '@typescript-eslint/require-await': 'off', '@typescript-eslint/no-non-null-assertion': 'off', '@typescript-eslint/unbound-method': 'off' },
   },
 );
