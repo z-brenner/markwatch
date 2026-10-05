@@ -7,7 +7,7 @@
 // code would otherwise need 'unsafe-inline'.
 import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
-import { connectSrcSources } from '../src/data/allowlist';
+import { connectSrcSources } from '../src/data/allowlist.ts';
 
 const sha256 = (s: string) => `'sha256-${createHash('sha256').update(s, 'utf8').digest('base64')}'`;
 

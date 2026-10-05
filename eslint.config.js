@@ -22,7 +22,7 @@ const restrictedProperties = [
 ];
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'research', 'test-results', 'playwright-report'] },
+  { ignores: ['dist', 'node_modules', 'research', 'test-results', 'playwright-report', '.claude'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
@@ -46,7 +46,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'research/**', '*.config.*', 'eslint.config.js'],
+    files: ['scripts/**/*.mjs', 'research/**', '*.config.*', 'eslint.config.js', 'tests/fixtures/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: { parserOptions: { projectService: false, project: null }, globals: { ...globals.node } },
   },
