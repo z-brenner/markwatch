@@ -610,3 +610,20 @@ These were checked against primary sources on 2026-10-05 unless marked **[unveri
   | Bodis | marked legacy; shut down Jan 2026 |
 
   Trade press reports that Google withdrew ads from parked domains in 2025–26 **[unverified]**. If that is right, "parked with ads" will increasingly mean "parked and for sale".
+
+---
+
+## 18. Implementation notes (what changed during the build)
+
+- **crt.sh query forms.** On 2026-10-06, crt.sh refused a leading `%` on `q=` ("Unsupported use of '%'", returned as HTTP 200 with an HTML body). Markwatch therefore runs two lookups per search term:
+  - a **prefix** search, `q=term%`, which is the more reliable form;
+  - a best-effort **substring** search on `Identity=%term%`, which answered earlier but often times out.
+
+  Each is its own lookup with its own blocked or manual state. crt.sh remains the least reliable endpoint in the app.
+- **Mocked e2e and CORS.** Playwright's `route.fulfill` makes fulfilled cross-origin responses readable, so a mock cannot reproduce a real "no CORS header" block by omitting the header. The fake network therefore fails the CORS request at the network layer and answers the app's follow-up opaque `no-cors` probe. That runs the app's real classification path. The CORS behaviour of the live servers is recorded in `research/`.
+- **Zod runs jitless.** Zod v4 probes `new Function('')`. Under the CSP that probe is reported as a violation, and the app forbids eval anyway.
+- **Single-file build.** No `vite-plugin-singlefile`: it depends on a `braces` version with a ReDoS advisory. A ~60-line custom plugin, `build/singlefile-csp.ts`, does the inlining and the CSP hashing.
+- **Verified live, from the browser through the production CSP** (`npm run test:live`):
+  - DoH (Cloudflare)
+  - Verisign RDAP for example.com, with IANA as registrar
+  - RIR RDAP for every IP
