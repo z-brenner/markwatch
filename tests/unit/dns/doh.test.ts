@@ -31,11 +31,11 @@ describe('dohUrl / manualDnsUrl', () => {
     });
   });
   it('builds the Google URL without headers', () => {
-    expect(dohUrl('google', 'example.com', 'AAAA')).toEqual({ url: 'https://dns.google/resolve?name=example.com&type=AAAA', headers: {} });
+    expect(dohUrl('google', 'example.com', 'AAAA')).toEqual({ url: 'https://dns.google/resolve?name=example.com&type=AAAA&edns_client_subnet=0.0.0.0/0', headers: {} });
   });
   it('percent-encodes the name so it cannot inject parameters', () => {
     const { url } = dohUrl('google', 'evil.com&type=TXT#x', 'A');
-    expect(url).toBe('https://dns.google/resolve?name=evil.com%26type%3DTXT%23x&type=A');
+    expect(url).toBe('https://dns.google/resolve?name=evil.com%26type%3DTXT%23x&type=A&edns_client_subnet=0.0.0.0/0');
     expect(new URL(url).searchParams.getAll('type')).toEqual(['A']);
   });
   it('links to Google’s human-readable page', () => {

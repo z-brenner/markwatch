@@ -142,18 +142,35 @@ export const inventoryEntrySchema = z.strictObject({
 
 // ───────────────────────────── Lookups ─────────────────────────────
 
+/**
+ * URLs from an imported case file end up in links. Only https URLs are
+ * accepted, so a crafted file cannot plant javascript:, data: or
+ * protocol-handler links (e.g. ms-msdt:).
+ */
+const httpsUrl = z
+  .string()
+  .max(8_000)
+  .refine((u) => {
+    try {
+      return new URL(u).protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }, 'Expected an https URL');
+
 const lookupBase = {
   kind: lookupKind,
   query: short,
   source: short,
-  url: z.string().max(8_000).optional(),
+  url: httpsUrl.optional(),
   at: isoUtcSchema,
 };
 
-export const lookupResultSchema = z.discriminatedUnion('status', [
+// Lookup `data` is typed per kind below (lookupResultSchema); this is the shape check.
+const lookupResultShape = z.discriminatedUnion('status', [
   z.strictObject({ ...lookupBase, status: z.literal('ok'), data: z.unknown(), raw: raw.optional() }),
   z.strictObject({ ...lookupBase, status: z.literal('not_found'), evidence: raw }),
-  z.strictObject({ ...lookupBase, status: z.literal('blocked'), reason: blockReason, detail: text, manualUrl: z.string().max(8_000).optional() }),
+  z.strictObject({ ...lookupBase, status: z.literal('blocked'), reason: blockReason, detail: text, manualUrl: httpsUrl.optional() }),
   z.strictObject({ ...lookupBase, status: z.literal('manual'), data: z.unknown(), pastedText: raw }),
 ]);
 
@@ -209,10 +226,10 @@ const providerMatch = z.strictObject({
   name: short,
   role: providerRole,
   evidence: text,
-  abuseUrl: short.optional(),
+  abuseUrl: httpsUrl.optional(),
   abuseEmail: short.optional(),
   hidesOrigin: z.boolean().optional(),
-  trademarkComplaintUrl: short.optional(),
+  trademarkComplaintUrl: httpsUrl.optional(),
 });
 
 const ctEntry = z.strictObject({
@@ -223,6 +240,40 @@ const ctEntry = z.strictObject({
   notBefore: isoUtcSchema,
   notAfter: isoUtcSchema,
   entryTimestamp: isoUtcSchema.optional(),
+});
+
+const dnsRecord = z.strictObject({ name: short, type: finite, ttl: finite, data: text });
+const dnsAnswer = z.strictObject({
+  name: short,
+  type: z.enum(['NS', 'A', 'AAAA', 'MX', 'TXT', 'SOA', 'CNAME']),
+  rcode: finite,
+  ad: z.boolean(),
+  answers: list(dnsRecord, 10_000),
+  authority: list(dnsRecord, 1_000),
+  resolver: z.enum(['cloudflare', 'google', 'manual']),
+  comment: text.optional(),
+});
+
+/** What `data` must look like for each lookup kind. */
+const LOOKUP_DATA = {
+  dns: dnsAnswer,
+  'rdap-domain': rdapDomain,
+  'rdap-ip': rdapNetwork,
+  ct: list(ctEntry, 50_000),
+  abuse: list(short, 100),
+} as const;
+
+/**
+ * Lookup results with their `data` validated per kind. Facts and scores are
+ * derived from this data, so a crafted case file must not be able to smuggle
+ * in shapes the app would crash on.
+ */
+export const lookupResultSchema = lookupResultShape.superRefine((l, ctx) => {
+  if (l.status !== 'ok' && l.status !== 'manual') return;
+  const r = LOOKUP_DATA[l.kind].safeParse(l.data);
+  if (!r.success) {
+    for (const issue of r.error.issues.slice(0, 5)) ctx.addIssue({ code: 'custom', path: ['data', ...issue.path], message: issue.message });
+  }
 });
 
 const domainFacts = z.strictObject({

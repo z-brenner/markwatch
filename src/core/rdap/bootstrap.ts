@@ -131,7 +131,7 @@ export function rdapDomainTarget(domainAscii: string, bootstrap: RdapBootstrap =
       return {
         kind: 'unsupported',
         reason: `The RDAP service for .${suffix} is listed only over plain http, which this app cannot use.`,
-        manualUrl: REGISTRY_WHOIS[tld] ?? ianaTldUrl(tld),
+        manualUrl: (Object.hasOwn(REGISTRY_WHOIS, tld) ? REGISTRY_WHOIS[tld] : undefined) ?? ianaTldUrl(tld),
       };
     }
     return { kind: 'ok', url: `${base}domain/${domain}`, server: base };
@@ -139,7 +139,7 @@ export function rdapDomainTarget(domainAscii: string, bootstrap: RdapBootstrap =
   return {
     kind: 'unsupported',
     reason: `No RDAP service for .${tld} in the IANA bootstrap. This says nothing about whether ${domain} is registered; check the registry's WHOIS.`,
-    manualUrl: REGISTRY_WHOIS[tld] ?? ianaTldUrl(tld),
+    manualUrl: (Object.hasOwn(REGISTRY_WHOIS, tld) ? REGISTRY_WHOIS[tld] : undefined) ?? ianaTldUrl(tld),
   };
 }
 

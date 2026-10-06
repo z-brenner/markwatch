@@ -86,11 +86,22 @@ export function Banner({ level, children, onDismiss }: { level: 'info' | 'cautio
 
 /** Link that opens a lookup or reference in a new tab. Says plainly that opening it discloses the query. */
 export function ExternalLink({ href, children, disclose = true }: { href: string; children: ReactNode; disclose?: boolean }) {
-  let host = href;
+  // Only https links are clickable. URLs can come from imported case files, so
+  // anything else (javascript:, data:, ms-msdt: and other protocol handlers) is
+  // shown as inert text.
+  let host: string | null = null;
   try {
-    host = new URL(href).hostname;
+    const u = new URL(href);
+    if (u.protocol === 'https:') host = u.hostname;
   } catch {
-    /* keep raw */
+    /* not a URL */
+  }
+  if (!host) {
+    return (
+      <span className="text-slate-500" title="Not an https link, so it is not clickable">
+        {children} <span className="font-mono text-xs break-all">({href})</span>
+      </span>
+    );
   }
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline" title={disclose ? `Opens ${host} in a new tab. That site will see what you are looking up.` : undefined}>

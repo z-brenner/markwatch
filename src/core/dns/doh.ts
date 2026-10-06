@@ -47,7 +47,9 @@ export function dohUrl(resolver: 'cloudflare' | 'google', name: string, type: RR
     // The ct=application/dns-json query parameter returns 400; the Accept header is required.
     return { url: `https://cloudflare-dns.com/dns-query?${q}`, headers: { accept: 'application/dns-json' } };
   }
-  return { url: `https://dns.google/resolve?${q}`, headers: {} };
+  // Opt out of EDNS Client Subnet: otherwise Google forwards the user's approximate
+  // network (e.g. a law firm's /24) to the target's authoritative nameservers.
+  return { url: `https://dns.google/resolve?${q}&edns_client_subnet=0.0.0.0/0`, headers: {} };
 }
 
 /** Google's human-readable lookup page, for "open in new tab". */

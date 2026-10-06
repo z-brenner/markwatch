@@ -67,15 +67,16 @@ function parsePaste(r: LookupResult<unknown>, text: string): unknown {
       if (rdap) return rdap;
       const w = parseWhoisText(text);
       if (!w.registrar && !w.registered && !(w.nameservers?.length)) return null;
-      const registrar = w.registrar ?? { abuseEmail: [], abuseTel: [] };
+      const { registrarAbuseEmail, ...whois } = w;
+      const registrar = whois.registrar ?? { abuseEmail: [], abuseTel: [] };
       return {
         ldhName: r.query,
         status: w.status ?? [],
         nameservers: w.nameservers ?? [],
         redactedFields: [],
         server: 'manual (WHOIS text pasted by user)',
-        ...w,
-        registrar: { ...registrar, abuseEmail: [...new Set([...(registrar.abuseEmail ?? []), ...(w.registrarAbuseEmail ?? [])])] },
+        ...whois,
+        registrar: { ...registrar, abuseEmail: [...new Set([...(registrar.abuseEmail ?? []), ...(registrarAbuseEmail ?? [])])] },
       } satisfies RdapDomain;
     }
     case 'rdap-ip':

@@ -51,7 +51,7 @@ export async function buildFixture(): Promise<{ state: CaseState; evidence: Map<
         raw: '{"Status":0,"Answer":[]}',
       },
       { kind: 'rdap-domain', status: 'blocked', query: 'acme-login.com', source: 'rdap.example', at: '2026-10-05T12:11:00.000Z', reason: 'cors_or_error', detail: 'No CORS header', manualUrl: 'https://rdap.example/domain/acme-login.com' },
-      { kind: 'rdap-domain', status: 'manual', query: 'acme-login.com', source: 'manual paste', at: '2026-10-05T12:20:00.000Z', data: { ldhName: 'acme-login.com' }, pastedText: 'Domain Name: ACME-LOGIN.COM\nRegistrar: Example Registrar' },
+      { kind: 'rdap-domain', status: 'manual', query: 'acme-login.com', source: 'manual paste', at: '2026-10-05T12:20:00.000Z', data: { ldhName: 'acme-login.com', status: [], nameservers: [], redactedFields: [], server: 'manual (WHOIS text pasted by user)' }, pastedText: 'Domain Name: ACME-LOGIN.COM\nRegistrar: Example Registrar' },
     ],
     facts: {
       verdict: 'registered',

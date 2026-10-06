@@ -36,12 +36,15 @@ export interface ImportLimits {
   maxEntries: number;
   /** Maximum total uncompressed size, declared and actual; also the per-entry maximum. */
   maxUncompressedBytes: number;
+  /** Maximum size of case.json, which is decoded and parsed in memory. */
+  maxCaseJsonBytes: number;
 }
 
 export const DEFAULT_IMPORT_LIMITS: Readonly<ImportLimits> = Object.freeze({
   maxZipBytes: 200 * 1024 * 1024,
   maxEntries: 2_000,
   maxUncompressedBytes: 500 * 1024 * 1024,
+  maxCaseJsonBytes: 50 * 1024 * 1024,
 });
 
 export type CaseExportErrorCode = 'invalid_state' | 'evidence_missing' | 'evidence_mismatch';
@@ -395,6 +398,9 @@ export async function importCaseZip(bytes: Uint8Array, limits?: Partial<ImportLi
     declaredTotal += cost;
     if (declaredTotal > lim.maxUncompressedBytes) {
       throw new CaseImportError('too_large', `The archive declares more than ${lim.maxUncompressedBytes} uncompressed bytes.`);
+    }
+    if (f.name === 'case.json' && cost > lim.maxCaseJsonBytes) {
+      throw new CaseImportError('too_large', `case.json declares ${cost} bytes; the limit is ${lim.maxCaseJsonBytes}.`);
     }
     if (f.name === 'case.json' || f.name === 'manifest.json') {
       checkCompression(f);
