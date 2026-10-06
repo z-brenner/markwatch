@@ -24,19 +24,22 @@ export type CrtshMode = 'prefix' | 'substring';
 export const MAX_CT_ROWS = 10_000;
 const MAX_NAMES_PER_CERT = 1000;
 
+// Prefix search uses `q=term%`, which crt.sh answers most reliably. Substring
+// search (`%term%`) is refused on `q=` by current crt.sh but has been answered
+// on the `Identity=` parameter; it is best-effort and slow, and often times out.
 function q(term: string, mode: CrtshMode): string {
   const t = encodeURIComponent(term.trim().toLowerCase());
-  return mode === 'substring' ? `%25${t}%25` : `${t}%25`;
+  return mode === 'substring' ? `Identity=%25${t}%25` : `q=${t}%25`;
 }
 
 /** JSON search URL for live certificates matching `term` (prefix search by default; see header). */
 export function crtshUrl(term: string, mode: CrtshMode = 'prefix'): string {
-  return `https://crt.sh/?q=${q(term, mode)}&output=json&exclude=expired`;
+  return `https://crt.sh/?${q(term, mode)}&output=json&exclude=expired`;
 }
 
 /** The same search as a human-readable page, for "open in new tab". */
 export function manualCrtshUrl(term: string, mode: CrtshMode = 'prefix'): string {
-  return `https://crt.sh/?q=${q(term, mode)}&exclude=expired`;
+  return `https://crt.sh/?${q(term, mode)}&exclude=expired`;
 }
 
 // DNS-name identities only. crt.sh also lists email addresses (S/MIME) and IPs.

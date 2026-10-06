@@ -91,7 +91,7 @@ function parsePaste(r: LookupResult<unknown>, text: string): unknown {
     case 'ct':
       try {
         const list = parseCrtsh(JSON.parse(text));
-        return list.length ? list : null;
+        return list?.length ? list : null;
       } catch {
         return null;
       }
@@ -110,7 +110,7 @@ export function LookupView({ r, onManual }: { r: LookupResult<unknown>; onManual
       setErr('Could not find usable data in the pasted text. Paste the raw JSON or WHOIS output.');
       return;
     }
-    onManual?.({ status: 'manual', kind: r.kind, query: r.query, source: `${r.source} (pasted by user)`, at: nowUtc(), data, pastedText: text.slice(0, 200_000) } as LookupResult<unknown>);
+    onManual?.({ status: 'manual', kind: r.kind, query: r.query, source: `${r.source} (pasted by user)`, at: nowUtc(), data, pastedText: text.slice(0, 200_000) });
     setOpen(false);
     setText('');
     setErr('');

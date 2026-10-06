@@ -119,24 +119,27 @@ export class BrowserCollector implements Collector {
     return { status: 'ok', kind: 'rdap-ip', query: ip, source: hostOf(out.finalUrl), url: target.url, at: nowUtc(), data, raw: out.text.slice(0, RAW_MAX) };
   }
 
-  async ctSearch(term: string, o: CallOpts = {}): Promise<LookupResult<CtEntry[]>> {
-    const url = crtshUrl(term);
-    const manual = manualCrtshUrl(term);
+  async ctSearch(term: string, o: CallOpts & { mode?: 'prefix' | 'substring' } = {}): Promise<LookupResult<CtEntry[]>> {
+    const mode = o.mode ?? 'prefix';
+    const url = crtshUrl(term, mode);
+    const manual = manualCrtshUrl(term, mode);
+    const query = mode === 'substring' ? `%${term}% (names containing)` : `${term}% (names starting with)`;
     let out = await this.get(url, CT_TIMEOUT, { accept: 'application/json' }, o.signal);
     // crt.sh fails often; one retry (the limiter enforces the 12 s spacing).
     if ((!out.ok && out.reason !== 'cancelled' && out.reason !== 'csp') || (out.ok && out.status >= 500)) {
       out = await this.get(url, CT_TIMEOUT, { accept: 'application/json' }, o.signal);
     }
-    if (!out.ok) return blocked('ct', term, 'crt.sh', out.reason, out.detail, url, manual);
-    if (out.status !== 200) return blocked('ct', term, 'crt.sh', 'http_error', `crt.sh answered HTTP ${out.status}.`, url, manual);
-    if (out.truncated) return blocked('ct', term, 'crt.sh', 'parse_error', 'The crt.sh result was too large to process in the browser. Narrow the search term or use the manual link.', url, manual);
-    const json = tryJson(out.text);
-    if (!Array.isArray(json)) return blocked('ct', term, 'crt.sh', 'parse_error', 'crt.sh returned something other than a JSON list (it often returns an HTML error page under load).', url, manual);
-    return { status: 'ok', kind: 'ct', query: term, source: 'crt.sh', url, at: nowUtc(), data: parseCrtsh(json) };
+    if (!out.ok) return blocked('ct', query, 'crt.sh', out.reason, out.detail, url, manual);
+    if (out.status !== 200) return blocked('ct', query, 'crt.sh', 'http_error', `crt.sh answered HTTP ${out.status}.`, url, manual);
+    if (out.truncated) return blocked('ct', query, 'crt.sh', 'parse_error', 'The crt.sh result was too large to process in the browser. Narrow the search term or use the manual link.', url, manual);
+    const entries = parseCrtsh(tryJson(out.text));
+    if (!entries) return blocked('ct', query, 'crt.sh', 'parse_error', 'crt.sh returned something other than a JSON list (it often returns an HTML error page under load, or refuses the query form).', url, manual);
+    return { status: 'ok', kind: 'ct', query, source: 'crt.sh', url, at: nowUtc(), data: entries };
   }
 
   async abuseContact(ip: string, o: CallOpts = {}): Promise<LookupResult<string[]>> {
     const name = abusixQueryName(ip);
+    if (!name) return blocked('abuse', ip, 'Abusix Contact DB', 'unsupported', 'Not a valid public IP address.');
     const r = await this.dns(name, 'TXT', o);
     const base = { kind: 'abuse' as const, query: ip, source: `Abusix Contact DB via ${r.source}`, at: r.at, ...(r.url ? { url: r.url } : {}) };
     if (r.status === 'blocked') return { ...base, status: 'blocked', reason: r.reason, detail: r.detail, ...(r.manualUrl ? { manualUrl: r.manualUrl } : {}) };

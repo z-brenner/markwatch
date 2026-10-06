@@ -64,7 +64,11 @@ export function buildFacts(rec: DomainRecord): DomainFacts {
   const seen = new Set<number>();
   for (const l of rec.lookups) {
     if (l.kind === 'ct' && (l.status === 'ok' || l.status === 'manual')) {
-      for (const e of l.data as CtEntry[]) if (!seen.has(e.id)) (seen.add(e.id), ct.push(e));
+      for (const e of l.data as CtEntry[]) {
+        if (seen.has(e.id)) continue;
+        seen.add(e.id);
+        ct.push(e);
+      }
     }
   }
 

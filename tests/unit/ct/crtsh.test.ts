@@ -18,9 +18,9 @@ describe('crtshUrl / manualCrtshUrl', () => {
     expect(crtshUrl('Acme')).toBe('https://crt.sh/?q=acme%25&output=json&exclude=expired');
     expect(manualCrtshUrl('Acme')).toBe('https://crt.sh/?q=acme%25&exclude=expired');
   });
-  it('can still build the substring form on request', () => {
-    expect(crtshUrl('acme', 'substring')).toBe('https://crt.sh/?q=%25acme%25&output=json&exclude=expired');
-    expect(manualCrtshUrl('acme', 'substring')).toBe('https://crt.sh/?q=%25acme%25&exclude=expired');
+  it('builds the substring form on the Identity parameter (q= refuses a leading %)', () => {
+    expect(crtshUrl('acme', 'substring')).toBe('https://crt.sh/?Identity=%25acme%25&output=json&exclude=expired');
+    expect(manualCrtshUrl('acme', 'substring')).toBe('https://crt.sh/?Identity=%25acme%25&exclude=expired');
   });
   it('percent-encodes the term', () => {
     const url = crtshUrl(' a&b=c#d ');

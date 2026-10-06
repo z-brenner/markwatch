@@ -9,7 +9,7 @@ import { resolveDomains, verifyWithRdap, type ResolveProgress } from '../pipelin
 import { normalizeDomain, registrableDomain, markToSeeds } from '../pipeline/deps';
 import { nsHosts } from '../core/dns/doh';
 import { nowUtc } from '../core/util';
-import type { CtEntry, DnsAnswer, LookupResult } from '../core/types';
+import type { CtEntry, LookupResult } from '../core/types';
 import type { CaseStore } from './store';
 
 export interface RunSnapshot {
@@ -90,12 +90,16 @@ export class Runner {
     const collector = this.collectorFactory(this.store);
     const results: RunSnapshot['ct'] = [];
     try {
+      // Prefix first (most reliable on crt.sh), then substring (best-effort).
+      // The limiter spaces crt.sh requests 12 s apart.
       for (const term of terms) {
-        if (this.abort.signal.aborted) break;
-        const result = await collector.ctSearch(term, { signal: this.abort.signal });
-        this.store.recordLookup([], result);
-        results.push({ term, result });
-        this.set({ ct: [...results] });
+        for (const mode of ['prefix', 'substring'] as const) {
+          if (this.abort.signal.aborted) break;
+          const result = await collector.ctSearch(term, { signal: this.abort.signal, mode });
+          this.store.recordLookup([], result);
+          results.push({ term: result.query, result });
+          this.set({ ct: [...results] });
+        }
       }
       this.applyCt(results);
     } finally {
@@ -103,7 +107,7 @@ export class Runner {
     }
   }
 
-  /** Accepts crt.sh JSON the user pasted after a blocked search. */
+  /** Accepts crt.sh JSON the user pasted after a blocked search. `term` is the blocked lookup's query label. */
   applyManualCt(term: string, entries: CtEntry[], pastedText: string): void {
     const result: LookupResult<CtEntry[]> = { status: 'manual', kind: 'ct', query: term, source: 'crt.sh (pasted by user)', at: nowUtc(), data: entries, pastedText };
     this.store.recordLookup([], result, 'user');
@@ -169,7 +173,7 @@ export class Runner {
     const r = await collector.dns(reg, 'NS', { signal });
     this.store.recordLookup([], r);
     if (r.status === 'ok') {
-      this.store.primaryNs = nsHosts(r.data as DnsAnswer);
+      this.store.primaryNs = nsHosts(r.data);
       this.store.rescoreAll();
     }
   }

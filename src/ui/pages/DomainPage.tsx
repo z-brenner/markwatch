@@ -148,7 +148,7 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
                   <div className="text-xs text-slate-600">
                     Abuse: {n.abuseEmail.join(', ') || '—'} · {n.server}
                   </div>
-                  {f.abusix[ip]?.length ? <div className="text-xs text-slate-600">Abusix: {f.abusix[ip]!.join(', ')}</div> : null}
+                  {f.abusix[ip]?.length ? <div className="text-xs text-slate-600">Abusix: {f.abusix[ip].join(', ')}</div> : null}
                 </div>
               ))}
               {f.providers.map((p) => (

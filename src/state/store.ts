@@ -72,6 +72,11 @@ export class CaseStore {
   /** Primary-domain NS, used by the "same nameservers" scoring rule. */
   primaryNs: string[] = [];
 
+  /** Forget the primary NS (e.g. after the primary domain changes) so the next run re-resolves it. */
+  resetPrimaryNs(): void {
+    this.primaryNs = [];
+  }
+
   private constructor(state: CaseState) {
     this.snap = { state, dirty: false, templates: this.builtins, importWarnings: [] };
   }

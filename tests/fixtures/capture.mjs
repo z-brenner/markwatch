@@ -166,7 +166,7 @@ await writeFile(manifestPath, JSON.stringify(sorted, null, 2) + '\n');
 
 const rows = Object.entries(sorted).map(
   ([file, m]) =>
-    `| \`${file}\` | ${m.status} | ${m.capturedAt.slice(0, 10)} | ${m.note}${m.trimmed ? ` (trimmed: ${m.trimmed.join('; ')})` : ''}${m.finalUrl ? ` (redirected to ${m.finalUrl})` : ''}${m.emptyBody ? ' (empty body on the wire; stored as \`null\`)' : ''}${m.handWritten ? ' **(hand-written)**' : ''} | ${m.url} |`,
+    `| \`${file}\` | ${m.status} | ${m.capturedAt.slice(0, 10)} | ${m.note}${m.trimmed ? ` (trimmed: ${m.trimmed.join('; ')})` : ''}${m.finalUrl ? ` (redirected to ${m.finalUrl})` : ''}${m.emptyBody ? ' (empty body on the wire; stored as null)' : ''}${m.handWritten ? ' **(hand-written)**' : ''} | ${m.url} |`,
 );
 const readme = `# Test fixtures
 

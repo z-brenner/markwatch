@@ -24,7 +24,8 @@ export interface Collector {
   dns(name: string, type: RRType, opts?: CallOpts): Promise<LookupResult<DnsAnswer>>;
   rdapDomain(domain: string, opts?: CallOpts): Promise<LookupResult<RdapDomain>>;
   rdapIp(ip: string, opts?: CallOpts): Promise<LookupResult<RdapNetwork>>;
-  ctSearch(term: string, opts?: CallOpts): Promise<LookupResult<CtEntry[]>>;
+  /** prefix: names starting with term (reliable); substring: names containing it (best-effort on crt.sh). */
+  ctSearch(term: string, opts?: CallOpts & { mode?: 'prefix' | 'substring' }): Promise<LookupResult<CtEntry[]>>;
   abuseContact(ip: string, opts?: CallOpts): Promise<LookupResult<string[]>>;
   /** Out of scope for the browser collector; reserved for a companion process. */
   capturePage?(url: string, opts?: CallOpts): Promise<LookupResult<PageCapture>>;

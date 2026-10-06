@@ -55,7 +55,7 @@ export function SetupPage({ nav }: { nav: Nav }) {
     store.setInventory([...ownedParsed.valid.map((pattern): InventoryEntry => ({ pattern, kind: 'owned' })), ...authEntries]);
     store.updateSender(sender);
     store.updateSettings(settings);
-    store.primaryNs = [];
+    store.resetPrimaryNs();
     setSaved(true);
   };
 
