@@ -21,6 +21,10 @@ import {
   type LookupResult,
 } from '../types';
 
+// Never let zod compile validators with new Function(): the app forbids eval,
+// and under the CSP even zod's feature probe is reported as a violation.
+z.config({ jitless: true });
+
 export const CASE_SCHEMA_VERSION = 1;
 
 // ───────────────────────────── Errors ─────────────────────────────

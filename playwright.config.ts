@@ -22,7 +22,7 @@ export default defineConfig({
       timeout: 10 * 60_000,
       use: process.env.HTTPS_PROXY
         ? {
-            proxy: { server: process.env.HTTPS_PROXY },
+            proxy: { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' },
             // Sandboxed CI behind a TLS-intercepting proxy: trust only that CA, by SPKI pin.
             ...(process.env.PW_TRUST_SPKI
               ? { launchOptions: { args: [`--ignore-certificate-errors-spki-list=${process.env.PW_TRUST_SPKI}`] } }

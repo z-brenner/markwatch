@@ -34,7 +34,7 @@ const TRAP_SCRIPT = () => {
   def(window, 'SharedWorker', 'SharedWorker');
   def(window, 'open', 'window.open');
   document.addEventListener('securitypolicyviolation', (e) => {
-    g.__mwGuard.csp.push(`${e.violatedDirective} ${e.blockedURI}`);
+    g.__mwGuard.csp.push(`${e.violatedDirective} ${e.blockedURI} ${e.sample} @${e.sourceFile}:${e.lineNumber}:${e.columnNumber}`);
   });
 };
 

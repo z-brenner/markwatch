@@ -119,6 +119,20 @@ function rdapIp(ip: string) {
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, headers: CORS, body: JSON.stringify(body) });
 
+/**
+ * Simulates a response without CORS headers. Playwright's route.fulfill makes
+ * fulfilled responses readable, so instead the CORS request fails at the
+ * network layer (what the page observes for an unreadable response) while the
+ * app's follow-up opaque `no-cors` probe succeeds. Real-browser behaviour of the
+ * live servers is recorded in research/.
+ */
+async function noCors(route: Route, status: number, body: string): Promise<void> {
+  // CORS GETs always carry an Origin header; no-cors GETs never do.
+  const isCors = 'origin' in (await route.request().allHeaders());
+  if (isCors) await route.abort('failed');
+  else await route.fulfill({ status, headers: { 'content-type': 'text/plain' }, body });
+}
+
 export function fakeNet(opts: FakeNetOptions = {}): MockHandler {
   return async (url, route) => {
     const host = url.hostname;
@@ -130,8 +144,8 @@ export function fakeNet(opts: FakeNetOptions = {}): MockHandler {
     }
     if (host === 'crt.sh') {
       if (opts.crtsh === 'blocked') {
-        // 502 with no CORS header: the browser blocks it, exactly like real crt.sh under load.
-        await route.fulfill({ status: 502, headers: { 'content-type': 'text/html' }, body: '<html>502 Bad Gateway</html>' });
+        // 502 with no CORS header, like real crt.sh under load.
+        await noCors(route, 502, '<html>502 Bad Gateway</html>');
         return true;
       }
       await json(route, [
@@ -151,7 +165,7 @@ export function fakeNet(opts: FakeNetOptions = {}): MockHandler {
         return true;
       }
       if (d.rdap === 'blocked') {
-        await route.fulfill({ status: 429, headers: { 'content-type': 'text/plain', 'retry-after': '3600' }, body: 'Too Many Requests' });
+        await noCors(route, 429, 'Too Many Requests');
         return true;
       }
       await json(route, rdapDomain(name, d));

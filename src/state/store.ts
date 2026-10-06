@@ -102,9 +102,23 @@ export class CaseStore {
 
   private notifyTimer: ReturnType<typeof setTimeout> | undefined;
 
-  private set(state: CaseState, extra: Partial<StoreSnapshot> = {}, dirty = true): void {
+  /**
+   * Replaces the state. User actions notify synchronously so controlled inputs
+   * stay responsive; bulk traffic (lookups, audit appends) passes `defer` and is
+   * coalesced.
+   */
+  private set(state: CaseState, extra: Partial<StoreSnapshot> = {}, dirty = true, defer = false): void {
     this.snap = { ...this.snap, ...extra, state, dirty: dirty || this.snap.dirty };
-    this.scheduleNotify();
+    if (defer) this.scheduleNotify();
+    else this.notifyNow();
+  }
+
+  private notifyNow(): void {
+    if (this.notifyTimer !== undefined) {
+      clearTimeout(this.notifyTimer);
+      this.notifyTimer = undefined;
+    }
+    for (const l of this.listeners) l();
   }
 
   /** Coalesces bursts (thousands of lookups and audit appends) into ~10 renders per second. */
@@ -120,7 +134,7 @@ export class CaseStore {
   audit(actor: 'user' | 'system', type: AuditType, payload: Record<string, unknown>): Promise<void> {
     const job = this.auditQueue.then(async () => {
       const log: AuditEntry[] = await appendAudit(this.snap.state.audit, { actor, type, payload });
-      this.set({ ...this.snap.state, audit: log });
+      this.set({ ...this.snap.state, audit: log }, {}, true, true);
     });
     this.auditQueue = job.catch(() => undefined);
     return job;
@@ -163,10 +177,15 @@ export class CaseStore {
   /** Applies a lookup result to the given domains and logs it once. */
   recordLookup(domains: string[], result: LookupResult<unknown>, actor: 'user' | 'system' = 'system'): void {
     const set = new Set(domains);
-    this.set({
-      ...this.state,
-      domains: this.state.domains.map((d) => (set.has(d.domain) ? this.rescore({ ...d, lookups: [...d.lookups, result] }) : d)),
-    });
+    this.set(
+      {
+        ...this.state,
+        domains: this.state.domains.map((d) => (set.has(d.domain) ? this.rescore({ ...d, lookups: [...d.lookups, result] }) : d)),
+      },
+      {},
+      true,
+      actor === 'system',
+    );
     void this.audit(actor, result.status === 'manual' ? 'lookup.manual' : 'lookup', {
       kind: result.kind,
       query: result.query,
