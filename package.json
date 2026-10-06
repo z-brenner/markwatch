@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:licenses && tsc --noEmit -p . && vite build",
+    "build": "npm run check:licenses && npm run notices && tsc --noEmit -p . && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit -p .",
     "lint": "eslint .",
@@ -19,6 +19,7 @@
     "test:e2e": "playwright test --project=mocked",
     "test:live": "MARKWATCH_LIVE=1 playwright test --project=live",
     "check:licenses": "node scripts/check-licenses.mjs",
+    "notices": "node scripts/third-party-notices.mjs",
     "update-bootstrap": "node scripts/update-bootstrap.mjs",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e"
   },

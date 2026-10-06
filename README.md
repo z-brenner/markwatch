@@ -20,25 +20,35 @@ The value is in the triage and the remedy routing, not the scanning.
 
 - The build is one static `index.html`. It has no server, accounts, analytics or telemetry.
 - It uses no cookies, localStorage, sessionStorage, IndexedDB, Cache API or service worker.
-- Lookups are fetched with `cache: 'no-store'` and `credentials: 'omit'`.
+- Lookups are fetched with `cache: 'no-store'`, `credentials: 'omit'` and no Referer.
 - State lives in memory. Closing the tab discards it. The only way to keep work is to export a case file (ZIP) and import it later.
 
 **But each lookup discloses what you look up to whoever answers it:**
 
 | Lookup | Who learns what |
 |---|---|
-| DNS (DNS over HTTPS) | The resolver (Cloudflare by default; Google only if Cloudflare fails) sees every domain queried. The resolver in turn queries the domain's authoritative nameservers. A registrant who runs their own nameservers can therefore see that someone resolved their domain. |
+| Every request below | The server sees your IP address, your browser's User-Agent, and the `Origin` header: the address the page is served from, or `null` when opened from disk. |
+| DNS (DNS over HTTPS) | The resolver (Cloudflare by default; Google only if Cloudflare fails) sees every domain queried. The resolver in turn queries the domain's authoritative nameservers. A registrant who runs their own nameservers can therefore see that someone resolved their domain. Neither resolver passes your network on to those nameservers: Google is queried with `edns_client_subnet=0.0.0.0/0`, and Cloudflare does not send EDNS Client Subnet. |
 | RDAP, domain | The registry for that TLD sees the domain. |
 | RDAP, IP | The regional internet registry (ARIN, RIPE NCC, APNIC, LACNIC, AFRINIC, or a national registry they refer to) sees the IP address. |
 | Certificate search | crt.sh sees your mark (the search term). |
 | Abuse contact (Abusix) | The DoH resolver and Abusix's nameservers see the IP address. |
+| "Check IANA for updates" (About page, only when clicked) | data.iana.org sees that someone fetched its public RDAP bootstrap file. Nothing you look up is sent. |
 | "Open this lookup in a new tab" links | The site opened sees the query. |
+
+**And some traces stay on your own computer, outside the app's control:**
+
+- Pages opened from "open in a new tab" links go into your browser history.
+- Downloads go into the browser's download history, and their names say what you worked on: `markwatch-case-<mark>-<time>.zip` for case files, `<template>-<domain>.eml` or `.txt` for drafts.
+- "Copy text" puts a draft on the operating system clipboard, which may keep a clipboard history or sync it to your other devices.
+
+The case file's audit log is hash-chained. That makes it **tamper-evident, not tamper-proof**: an edit made outside the app breaks the chain and is flagged on import, but anyone can rewrite the whole chain and recompute every hash. Timestamps come from the local clock.
 
 **How the boundary is enforced:** the page ships a strict Content-Security-Policy `<meta>` tag.
 
 - `default-src 'none'`.
 - Inline script and style are allowed only by SHA-256 hash.
-- `connect-src` lists exactly the lookup hosts: the two DoH resolvers, crt.sh, data.iana.org, and the RDAP servers named in the IANA RDAP bootstrap, which are generated into [`src/data/allowlist.json`](src/data/allowlist.json).
+- `connect-src` lists exactly the lookup hosts: the two DoH resolvers, crt.sh, data.iana.org (used only by the on-demand bootstrap check), and the RDAP servers named in the IANA RDAP bootstrap, which are generated into [`src/data/allowlist.json`](src/data/allowlist.json).
 - The About page lists every allowed host.
 
 Two limitations of a `<meta>` CSP:
@@ -102,7 +112,10 @@ Pasted results are parsed by the same parsers and labeled "entered by user".
 - **Provider fingerprints:** [`src/config/providers.ts`](src/config/providers.ts). **Parking nameservers:** [`src/config/parking.ts`](src/config/parking.ts).
 - **Default TLD swap list and keywords:** [`src/config/tlds.ts`](src/config/tlds.ts), [`src/config/keywords.ts`](src/config/keywords.ts).
 - **Templates:** [`templates/`](templates/). The syntax is documented in [`templates/README.md`](templates/README.md). Counsel-approved templates can also be imported at runtime on the Templates page. An import overrides the built-in template with the same id and is saved in the case file.
-- **Network allowlist:** run `NODE_USE_ENV_PROXY=1 npm run update-bootstrap` to refresh the IANA RDAP bootstrap snapshot and regenerate `src/data/allowlist.json`. Review the diff, then rebuild. The app warns when the bundled bootstrap is stale.
+- **Network allowlist:** run `NODE_USE_ENV_PROXY=1 npm run update-bootstrap` to refresh the IANA RDAP bootstrap snapshot and regenerate `src/data/allowlist.json`. Review the diff, then rebuild.
+  - The About page shows the snapshot's publication date and age, and warns when it is more than 90 days old.
+  - Its **Check IANA for updates** button runs only when clicked. It fetches IANA's domain bootstrap (`https://data.iana.org/rdap/dns.json`) and compares it with the bundled snapshot. It reports how many TLDs changed RDAP servers, and lists any new RDAP hosts that this build's CSP does not allow. The IP and ASN bootstrap files are not checked.
+  - The page cannot update itself, because the CSP is fixed at build time. If the check reports changes, run `npm run update-bootstrap` and rebuild.
 
 ## Development
 
@@ -113,14 +126,21 @@ npm run typecheck
 npm test               # Vitest unit tests
 npm run test:e2e       # Playwright against the production build, all network mocked
 npm run test:live      # opt-in: real lookups for example.com in a real browser
+npm run notices        # regenerate THIRD_PARTY_LICENSES.md and src/data/notices.ts (also run by build)
 npm run verify         # all of the above except live
 ```
 
 Test-suite guardrails:
 
-- **Storage and network guard.** Every e2e test runs with throwing, recording traps installed on localStorage, sessionStorage, indexedDB, caches, cookies, `navigator.storage`, service workers, BroadcastChannel and `window.open`. A router fails the test on any request to a host outside the allowlist. CSP violations and uncaught page errors also fail the test.
+- **Storage and network guard.** Every e2e test runs with throwing, recording traps installed on:
+  - storage: localStorage, sessionStorage, indexedDB, caches, cookies, `navigator.storage`, service workers;
+  - cross-context state: BroadcastChannel, SharedWorker, `window.open`, `history.pushState`/`replaceState`, `navigator.locks`, the File System Access pickers;
+  - network channels outside `fetch`: `navigator.sendBeacon`, WebSocket, EventSource, WebTransport and WebRTC (`RTCPeerConnection`, which CSP `connect-src` does not govern).
+
+  A router fails the test on any request to a host outside the allowlist; loopback is allowed only on the app server's own port. CSP violations, uncaught page errors and a non-empty `window.name` also fail the test. Downloads (`<a download>` with Blob URLs) and `navigator.clipboard.writeText` are used by design and are not trapped.
 - **Build check.** The CSP `connect-src` in the built file must equal the allowlist, with no `unsafe-inline` and no external `src`/`href`.
 - **License check.** `npm run check:licenses` runs inside `npm run build` and fails on any GPL, AGPL, LGPL, SSPL, EUPL or OSL dependency.
+- **License notices.** `npm run notices` runs inside `npm run build`. It regenerates [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and `src/data/notices.ts`, and fails if a bundled package has no license file. The output is deterministic, so commit it.
 
 Live test behind a TLS-intercepting proxy: set `HTTPS_PROXY`, and set `PW_TRUST_SPKI` to the base64 SHA-256 SPKI pin of the proxy CA.
 
@@ -142,9 +162,12 @@ X-Content-Type-Options: nosniff
 
 ## Licensing and credits
 
-See [NOTICE](NOTICE).
+See [NOTICE](NOTICE) and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 - Permutation algorithms and lookalike tables are derived from dnstwist (Apache-2.0).
 - Some techniques are derived from ail-typo-squatting (BSD-2-Clause). Its Wikipedia-derived word lists were deliberately **not** used.
+- The build bundles react, react-dom, scheduler, zod, fflate, punycode, tldts and tldts-core, plus CSS generated by Tailwind CSS. All are MIT-licensed.
+- Public Suffix List data (MPL-2.0) is bundled via tldts. The source is at <https://publicsuffix.org/list/>.
 - No GPL or AGPL code or dependencies.
-- Public Suffix List data (MPL-2.0) is bundled via tldts.
+
+The minifier strips license comments, so the built `index.html` carries the notices itself. NOTICE, the Apache License 2.0, the ail-typo-squatting license, every bundled package's license and the Public Suffix List notice are embedded in the file. They are shown on the About page under **Licenses**.

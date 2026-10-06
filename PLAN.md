@@ -49,26 +49,31 @@ src/
   collect/
     Collector.ts        interface + LookupResult types
     BrowserCollector.ts DoH/RDAP/crt.sh over fetch, with concurrency and backoff
-    blocked.ts          classifies failures (CSP vs CORS/network vs timeout); builds manual-lookup links
-    mock/               fixture-backed collector for tests and the demo
+    transport.ts        the one guarded fetch; classifies failures (CSP vs CORS/network vs timeout)
+    limiter.ts          per-host concurrency and backoff
+    bootstrapDrift.ts   on-demand check of the bundled RDAP bootstrap against IANA (About page)
   config/
     scoring.rules.ts    THE editable rules file
     providers.ts        NS/IP-org/MX → provider fingerprints (Cloudflare, AWS, GoDaddy DNS, Google Workspace…)
     parking.ts          parking-nameserver patterns
     keywords.ts         risky keywords and dictionary-combo words
     tlds.ts             default TLD-swap list
-  data/                 generated at build time, committed: IANA RDAP bootstrap snapshot, CSP allowlist
+  data/                 generated, committed: IANA RDAP bootstrap snapshot, CSP allowlist,
+                        notices.ts (third-party license texts embedded in the build)
   ui/                   pages + components
 templates/              *.md template files with front-matter and merge fields
+build/
+  singlefile-csp.ts     Vite plugin: inlines JS/CSS into index.html, hashes them, writes the CSP meta
 scripts/
   update-bootstrap.mjs  refreshes data/ from IANA and regenerates the allowlist
-  build-csp.mjs         Vite plugin: hashes the inlined script/style and writes the CSP meta
-  check-licenses.mjs    fails the build on any GPL/AGPL/LGPL/SSPL dependency
+  check-licenses.mjs    fails the build on any GPL/AGPL/LGPL/SSPL/EUPL/OSL dependency
+  third-party-notices.mjs  generates THIRD_PARTY_LICENSES.md and src/data/notices.ts (runs in npm run build)
 tests/
   unit/                 Vitest
   e2e/                  Playwright (network fully mocked) + live/ (opt-in)
 research/               CORS probe scripts and results (evidence for §4)
-NOTICE, THIRD_PARTY_LICENSES.md, README.md, PLAN.md
+licenses/               Apache-2.0.txt (dnstwist)
+NOTICE, THIRD_PARTY_LICENSES.md (generated), README.md, PLAN.md
 ```
 
 ### 2.2 Build: one self-contained HTML file
@@ -442,41 +447,49 @@ Details:
 
 ---
 
-## 13. Dependencies (versions from `npm view`, 2026-10-05)
+## 13. Dependencies (exact versions pinned in `package.json`)
 
-**Runtime (bundled into the HTML):**
+**Runtime (bundled into the HTML).** The transitive closure of `dependencies`, confirmed against a source-mapped build:
 
 | Package | Version | License | Why |
 |---|---|---|---|
 | react, react-dom | 19.3.0 | MIT | UI |
-| tldts | 7.4.x | MIT, **bundles Public Suffix List data, which is MPL-2.0** | registrable domain |
+| scheduler | 0.28.0 | MIT | dependency of react-dom |
+| tldts | 7.4.16 | MIT, **bundles Public Suffix List data, which is MPL-2.0** | registrable domain |
+| tldts-core | 7.4.16 | MIT | dependency of tldts |
 | punycode | 2.3.1 | MIT | deterministic IDNA in Node and the browser |
 | fflate | 0.8.3 | MIT | ZIP. Chosen over jszip, which is `MIT OR GPL-3.0`. |
-| zod | 4.6.x | MIT | strict validation of imported case files. Hand-rolled validators for an untrusted nested schema are a bug farm. |
+| zod | 4.6.5 | MIT | strict validation of imported case files. Hand-rolled validators for an untrusted nested schema are a bug farm. |
+
+Tailwind CSS is a build-time dependency, but the CSS it generates (preflight and utilities) is inlined, so its license ships too.
 
 **Dev only:**
 
 | Package | Version | License |
 |---|---|---|
-| vite | 8.3.x | MIT |
-| @vitejs/plugin-react | 6.1.x | MIT |
-| vite-plugin-singlefile | 2.3.x | MIT |
+| vite | 8.3.2 | MIT |
+| @vitejs/plugin-react | 6.1.2 | MIT |
 | typescript | **6.0.3, pinned**. TS 7 is `latest`, but typescript-eslint 8.71 supports `<6.1`. | Apache-2.0 |
-| tailwindcss, @tailwindcss/vite | 4.3.x | MIT |
-| vitest | 5.0.x | MIT |
-| jsdom | 30.x | MIT |
-| @testing-library/react / @testing-library/dom | 16.3 / 10.4 | MIT |
+| tailwindcss, @tailwindcss/vite | 4.3.3 | MIT |
+| vitest | 5.0.3 | MIT |
+| jsdom | 30.1.2 | MIT |
+| @testing-library/react / @testing-library/dom | 16.3.3 / 10.4.2 | MIT |
 | @playwright/test | **1.56.1, pinned** to match this environment's preinstalled Chromium build. It can be bumped wherever browsers can be downloaded. | Apache-2.0 |
-| eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, globals | 10.x / 10.x / 8.71 / 7.1 / 17.x | MIT |
-| @types/react, @types/react-dom | 19.3 | MIT |
+| eslint / @eslint/js / typescript-eslint / eslint-plugin-react-hooks / globals | 10.12.0 / 10.0.1 / 8.71.1 / 7.1.1 / 17.13.0 | MIT |
+| @types/react, @types/react-dom | 19.3.0 | MIT |
+| @types/node | 22.20.5 | MIT |
+| @types/punycode | 2.1.4 | MIT |
+
+No `vite-plugin-singlefile`: it was dropped because it depends on a `braces` version with a ReDoS advisory. The ~60-line plugin `build/singlefile-csp.ts` does the inlining and CSP hashing (see §18).
 
 No hosted fonts: a system font stack. No icon font: a handful of inline SVGs.
 
 **License hygiene:**
 
-- `NOTICE` covers the dnstwist and ail-typo-squatting attributions.
-- `THIRD_PARTY_LICENSES.md` is generated and includes PSL MPL-2.0 notice text with a link to the source at publicsuffix.org, which satisfies MPL §3.2 for the executable form.
-- The About page links to both.
+- `NOTICE` covers the dnstwist and ail-typo-squatting attributions, and points to the bundled third-party notices and the Public Suffix List's MPL-2.0 notice.
+- `npm run notices` (`scripts/third-party-notices.mjs`, run by `npm run build`) generates two files from the same sources: `THIRD_PARTY_LICENSES.md` for the repository and `src/data/notices.ts` for the build. Both contain NOTICE, the Apache-2.0 text, the ail-typo-squatting BSD-2-Clause text, the LICENSE file of every bundled package (name and version), and the PSL notice. The PSL notice links to the source at publicsuffix.org/list and to the MPL-2.0 text, which satisfies MPL §3.2 for the executable form. The output is deterministic and committed.
+- The minifier strips license comments, so the texts are embedded in `dist/index.html` itself. The About page shows them under "Licenses", each in a collapsible block, as plain text. This meets the MIT/BSD requirement that notices accompany copies, and Apache-2.0 §4(a) for the object-form dnstwist derivatives.
+- `npm run check:licenses` fails the build on any GPL, AGPL, LGPL, SSPL, EUPL or OSL dependency.
 
 ---
 
