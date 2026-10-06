@@ -1,0 +1,231 @@
+{
+  "crtsh/dnsviz.json": {
+    "url": "https://crt.sh/?q=dnsviz%25&output=json&exclude=expired",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:52:03.469Z",
+    "note": "prefix search \"dnsviz%\" (a handful of live certificates)"
+  },
+  "doh/cloudflare/44.116.133.213.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=44.116.133.213.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.726Z",
+    "note": "Abusix contact for 213.133.116.44 (Hetzner, www.hetzner.com)"
+  },
+  "doh/cloudflare/8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:55.052Z",
+    "note": "Abusix contact for 2001:4860:4860::8888 (IPv6 nibbles)"
+  },
+  "doh/cloudflare/8.8.8.8.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=8.8.8.8.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.410Z",
+    "note": "Abusix contact for 8.8.8.8 (Google)"
+  },
+  "doh/cloudflare/dnssec-failed.org_NS.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=dnssec-failed.org&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.074Z",
+    "note": "deliberately broken DNSSEC → SERVFAIL"
+  },
+  "doh/cloudflare/example.com_A.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=A",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:51.794Z",
+    "note": "example.com"
+  },
+  "doh/cloudflare/example.com_AAAA.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=AAAA",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.110Z",
+    "note": "example.com"
+  },
+  "doh/cloudflare/example.com_MX.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=MX",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.442Z",
+    "note": "example.com"
+  },
+  "doh/cloudflare/example.com_NS.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:51.072Z",
+    "note": "example.com"
+  },
+  "doh/cloudflare/example.com_TXT.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.752Z",
+    "note": "example.com"
+  },
+  "doh/cloudflare/markwatch-nonexistent-7f3kq9.com_NS.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=markwatch-nonexistent-7f3kq9.com&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.073Z",
+    "note": "NXDOMAIN"
+  },
+  "doh/cloudflare/pphosted.com_A.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=pphosted.com&type=A",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.759Z",
+    "note": "MX-only domain: empty A answer, SOA in authority"
+  },
+  "doh/cloudflare/pphosted.com_MX.json": {
+    "url": "https://cloudflare-dns.com/dns-query?name=pphosted.com&type=MX",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.434Z",
+    "note": "MX-only domain (no A/AAAA)"
+  },
+  "doh/google/44.116.133.213.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://dns.google/resolve?name=44.116.133.213.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.794Z",
+    "note": "Abusix contact for 213.133.116.44 (Hetzner, www.hetzner.com)"
+  },
+  "doh/google/8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://dns.google/resolve?name=8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:55.107Z",
+    "note": "Abusix contact for 2001:4860:4860::8888 (IPv6 nibbles)"
+  },
+  "doh/google/8.8.8.8.abuse-contacts.abusix.zone_TXT.json": {
+    "url": "https://dns.google/resolve?name=8.8.8.8.abuse-contacts.abusix.zone&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.464Z",
+    "note": "Abusix contact for 8.8.8.8 (Google)"
+  },
+  "doh/google/dnssec-failed.org_NS.json": {
+    "url": "https://dns.google/resolve?name=dnssec-failed.org&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:54.151Z",
+    "note": "deliberately broken DNSSEC → SERVFAIL"
+  },
+  "doh/google/example.com_A.json": {
+    "url": "https://dns.google/resolve?name=example.com&type=A",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:51.852Z",
+    "note": "example.com"
+  },
+  "doh/google/example.com_AAAA.json": {
+    "url": "https://dns.google/resolve?name=example.com&type=AAAA",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.173Z",
+    "note": "example.com"
+  },
+  "doh/google/example.com_MX.json": {
+    "url": "https://dns.google/resolve?name=example.com&type=MX",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.494Z",
+    "note": "example.com"
+  },
+  "doh/google/example.com_NS.json": {
+    "url": "https://dns.google/resolve?name=example.com&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:51.539Z",
+    "note": "example.com"
+  },
+  "doh/google/example.com_TXT.json": {
+    "url": "https://dns.google/resolve?name=example.com&type=TXT",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:52.813Z",
+    "note": "example.com"
+  },
+  "doh/google/markwatch-nonexistent-7f3kq9.com_NS.json": {
+    "url": "https://dns.google/resolve?name=markwatch-nonexistent-7f3kq9.com&type=NS",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.131Z",
+    "note": "NXDOMAIN"
+  },
+  "doh/google/pphosted.com_A.json": {
+    "url": "https://dns.google/resolve?name=pphosted.com&type=A",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.809Z",
+    "note": "MX-only domain: empty A answer, SOA in authority"
+  },
+  "doh/google/pphosted.com_MX.json": {
+    "url": "https://dns.google/resolve?name=pphosted.com&type=MX",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:53.491Z",
+    "note": "MX-only domain (no A/AAAA)"
+  },
+  "rdap/domain/abc.xyz.json": {
+    "url": "https://rdap.centralnic.com/xyz/domain/abc.xyz",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:46.517Z",
+    "note": "CentralNic (.xyz)"
+  },
+  "rdap/domain/bbc.co.uk.json": {
+    "url": "https://rdap.nominet.uk/uk/domain/bbc.co.uk",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:44.081Z",
+    "note": "Nominet (.uk)"
+  },
+  "rdap/domain/example.com.json": {
+    "url": "https://rdap.verisign.com/com/v1/domain/example.com",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:38.396Z",
+    "note": "Verisign (.com)"
+  },
+  "rdap/domain/google.ai.json": {
+    "url": "https://rdap.identitydigital.services/rdap/domain/google.ai",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:42.445Z",
+    "note": "Identity Digital (.ai)"
+  },
+  "rdap/domain/google.info.json": {
+    "url": "https://rdap.identitydigital.services/rdap/domain/google.info",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:41.793Z",
+    "note": "Identity Digital (.info)"
+  },
+  "rdap/domain/markwatch-nonexistent-7f3kq9.com.json": {
+    "url": "https://rdap.verisign.com/com/v1/domain/markwatch-nonexistent-7f3kq9.com",
+    "status": 404,
+    "capturedAt": "2026-10-05T23:37:39.061Z",
+    "note": "Verisign 404 for an unregistered .com",
+    "emptyBody": true
+  },
+  "rdap/domain/markwatch-nonexistent-7f3kq9.org.json": {
+    "url": "https://rdap.publicinterestregistry.org/rdap/domain/markwatch-nonexistent-7f3kq9.org",
+    "status": 404,
+    "capturedAt": "2026-10-05T23:37:40.127Z",
+    "note": "PIR 404 for an unregistered .org (JSON error body)"
+  },
+  "rdap/domain/web.dev.json": {
+    "url": "https://pubapi.registry.google/rdap/domain/web.dev",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:45.049Z",
+    "note": "Google Registry (.dev)"
+  },
+  "rdap/domain/wikipedia.org.json": {
+    "url": "https://rdap.publicinterestregistry.org/rdap/domain/wikipedia.org",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:40.785Z",
+    "note": "PIR (.org), RFC 9537 redactions"
+  },
+  "rdap/ip/1.1.1.1.json": {
+    "url": "https://rdap.apnic.net/ip/1.1.1.1",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:49.659Z",
+    "note": "APNIC"
+  },
+  "rdap/ip/193.0.6.139.json": {
+    "url": "https://rdap.db.ripe.net/ip/193.0.6.139",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:48.756Z",
+    "note": "RIPE NCC"
+  },
+  "rdap/ip/2606_4700_4700__1111.json": {
+    "url": "https://rdap.arin.net/registry/ip/2606:4700:4700::1111",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:50.221Z",
+    "note": "ARIN (IPv6)"
+  },
+  "rdap/ip/8.8.8.8.json": {
+    "url": "https://rdap.arin.net/registry/ip/8.8.8.8",
+    "status": 200,
+    "capturedAt": "2026-10-05T23:37:47.464Z",
+    "note": "ARIN"
+  }
+}

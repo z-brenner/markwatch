@@ -1,0 +1,23 @@
+{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question": [
+    {
+      "name": "8.8.8.8.abuse-contacts.abusix.zone.",
+      "type": 16
+    }
+  ],
+  "Answer": [
+    {
+      "name": "8.8.8.8.abuse-contacts.abusix.zone.",
+      "type": 16,
+      "TTL": 300,
+      "data": "network-abuse@google.com"
+    }
+  ],
+  "Comment": "Response from 52.71.237.138."
+}
