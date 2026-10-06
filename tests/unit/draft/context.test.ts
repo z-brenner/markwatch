@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addBusinessDays, buildDraftContext, CONTEXT_FIELDS, isSourcedValue, ursEligibility, type DraftContext } from '../../../src/core/draft/context';
+import { ursEligibility as ursEligibilityForTld } from '../../../src/core/route/tld';
 import { lookupPath } from '../../../src/core/draft/merge';
 import { makeDomain, makeFacts, makeState, RDAP_AT } from './fixtures';
 
@@ -161,10 +162,11 @@ describe('buildDraftContext', () => {
 
   it('computes URS eligibility from the TLD', () => {
     const forDomain = (d: string): unknown => get(buildDraftContext(makeState(), makeDomain({ domain: d, registrable: d, unicode: d }), { now: NOW }), 'urs.eligible');
-    expect(forDomain('acme-login.com')).toMatch(/^no — \.com/);
+    expect(forDomain('acme-login.com')).toMatch(/^no — The \.com registry agreement/);
     expect(forDomain('acme-login.org')).toMatch(/^yes — \.org/);
-    expect(forDomain('acme-login.shop')).toMatch(/^yes \(verify\)/);
-    expect(forDomain('acme-login.de')).toMatch(/^no — ccTLD/);
+    expect(forDomain('acme-login.shop')).toMatch(/^yes — \.shop appears to be a post-2012 gTLD/);
+    expect(forDomain('acme-login.de')).toMatch(/^verify — \.de is a country-code TLD/);
+    expect(forDomain('acme-login.mobi')).toMatch(/^verify — \.mobi is a legacy gTLD/);
   });
 
   it('computes follow-up dates per Registration Data Policy §10.5', () => {
@@ -177,21 +179,31 @@ describe('buildDraftContext', () => {
   });
 });
 
-describe('ursEligibility', () => {
+describe('ursEligibility (draft text, derived from route/tld.ts)', () => {
   it.each([
-    ['example.com', /^no — \.com is a legacy gTLD/],
-    ['example.net', /^no — \.net/],
-    ['example.edu', /^no — \.edu/],
+    ['example.com', /^no — The \.com registry agreement does not include URS/],
+    ['example.net', /^no — The \.net registry agreement/],
+    ['example.edu', /^no — \.edu is a restricted TLD/],
     ['example.org', /^yes — \.org/],
     ['example.info', /^yes — \.info/],
     ['example.biz', /^yes — \.biz/],
-    ['example.shop', /^yes \(verify\) — \.shop/],
-    ['example.de', /^no — ccTLD \(\.de\)/],
-    ['example.co.uk', /^no — ccTLD \(\.uk\)/],
-    ['example.xn--p1ai', /^yes \(verify\) — .*IDN ccTLD/],
+    ['example.shop', /^yes — \.shop/],
+    ['example.mobi', /^verify — \.mobi is a legacy gTLD/],
+    ['example.pro', /^verify — \.pro/],
+    ['example.asia', /^verify — \.asia/],
+    ['example.de', /^verify — \.de is a country-code TLD.*a few have adopted it voluntarily/],
+    ['example.co.uk', /^verify — \.uk is a country-code TLD/],
+    ['example.xn--p1ai', /^verify — \.xn--p1ai is an internationalized \(IDN\) TLD.*IDN country-code TLD/],
     ['EXAMPLE.ORG.', /^yes — \.org/],
   ])('%s', (d, re) => {
     expect(ursEligibility(d)).toMatch(re);
+  });
+
+  it('agrees with the route layer for every TLD class (single source of truth)', () => {
+    for (const d of ['a.com', 'a.org', 'a.shop', 'a.mobi', 'a.de', 'a.xn--p1ai', 'a.xn--3e0b707e', 'a.gov']) {
+      const r = ursEligibilityForTld(d);
+      expect(ursEligibility(d), d).toBe(`${r.eligible} — ${r.note}`);
+    }
   });
 });
 

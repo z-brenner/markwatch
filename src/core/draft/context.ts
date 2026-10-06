@@ -4,6 +4,7 @@
 // invented: a value that is unknown is simply absent, and the merge engine
 // renders it as UNFILLED.
 import { CLASSIFICATION_LABELS, type CaseState, type DomainRecord, type LookupResult, type Route } from '../types';
+import { ursEligibility as ursEligibilityForTld } from '../route/tld';
 import { nowUtc } from '../util';
 
 export interface Sourced<T> {
@@ -70,26 +71,19 @@ export const CONTEXT_FIELDS: { path: string; description: string }[] = [
   { path: 'score.total', description: 'Markwatch heuristic score (ranking only; not a finding).' },
   { path: 'inventory.party', description: 'Authorized party, when the domain matches an "authorized" inventory entry.' },
   { path: 'inventory.pattern', description: 'Inventory pattern the domain matched, if any.' },
-  { path: 'urs.eligible', description: 'Whether the URS may apply, from the TLD: "yes …", "yes (verify) …" or "no — …".' },
-  { path: 'followUp.ack', description: 'Registration Data Policy §10.5 acknowledgment due date: today + 2 business days (weekends skipped, holidays not).' },
-  { path: 'followUp.response', description: 'Registration Data Policy §10.5 response due date: followUp.ack + 30 calendar days.' },
+  { path: 'urs.eligible', description: 'Whether the URS may apply, from the TLD (same rule as the route’s URS escalation): "yes — <note>", "no — <note>" or "verify — <note>".' },
+  { path: 'followUp.ack', description: 'Registration Data Policy §10 acknowledgment due date: today + 2 business days (weekends skipped, holidays not).' },
+  { path: 'followUp.response', description: 'Registration Data Policy §10 response due date: followUp.ack + 30 calendar days.' },
 ];
 
-/** Legacy gTLDs that are not covered by the URS. */
-const NON_URS_LEGACY = new Set(['com', 'net', 'edu', 'gov', 'mil', 'int', 'arpa']);
-/** Legacy gTLDs that adopted the URS in their 2019 registry agreement renewals. */
-const URS_LEGACY = new Set(['org', 'info', 'biz']);
-
+/**
+ * URS eligibility as one line of text for drafts: "<yes|no|verify> — <note>".
+ * Derived from route/tld.ts, the single source of truth, so a draft never
+ * disagrees with the route's URS escalation.
+ */
 export function ursEligibility(domain: string): string {
-  const tld = (domain.toLowerCase().replace(/\.$/, '').split('.').pop() ?? '').trim();
-  if (tld === '') return 'no — no TLD';
-  if (NON_URS_LEGACY.has(tld)) return `no — .${tld} is a legacy gTLD not covered by the URS`;
-  if (/^[a-z]{2}$/.test(tld)) return `no — ccTLD (.${tld}); check the ccTLD’s own dispute policy`;
-  if (URS_LEGACY.has(tld)) return `yes — .${tld} adopted the URS in its 2019 registry agreement renewal`;
-  if (tld.startsWith('xn--')) {
-    return `yes (verify) — .${tld} is an internationalized TLD; the URS does not apply if it is an IDN ccTLD`;
-  }
-  return `yes (verify) — .${tld} appears to be a post-2012 gTLD; confirm URS coverage`;
+  const r = ursEligibilityForTld(domain);
+  return `${r.eligible} — ${r.note}`;
 }
 
 /** Adds n business days (Mon–Fri) to a UTC date. Public holidays are not considered. */

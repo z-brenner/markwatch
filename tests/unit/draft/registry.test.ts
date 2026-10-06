@@ -1,8 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BUILTIN_TEMPLATE_IDS } from '../../../src/core/types';
 import { buildDraftContext, CONTEXT_FIELDS } from '../../../src/core/draft/context';
 import { BANNER, renderTemplate } from '../../../src/core/draft/merge';
-import { builtinTemplates, MAX_TEMPLATE_BYTES, resolveTemplates, validateImportedTemplate } from '../../../src/core/draft/registry';
+import { builtinTemplates, COMPLIANCE_FORBIDDEN, complianceRuleErrors, MAX_TEMPLATE_BYTES, resolveTemplates, validateImportedTemplate } from '../../../src/core/draft/registry';
 import { parseTemplate } from '../../../src/core/draft/template';
 import { makeDomain, makeState } from './fixtures';
 
@@ -100,6 +101,64 @@ describe('validateImportedTemplate', () => {
     const r = validateImportedTemplate(big, 'big.md');
     expect(r.ok).toBe(false);
     expect(!r.ok && r.errors[0]).toMatch(/limit is 204800 bytes/);
+  });
+});
+
+const COMPLIANCE_SRC = readFileSync(new URL('../../../templates/compliance-note.md', import.meta.url), 'utf8');
+
+const NEUTRAL_NOTE = `---
+id: partner-note
+title: Partner brand check
+channel: internal
+classes: authorized_noncompliant
+subject: "Brand check: {{domain}}"
+---
+${BANNER}
+We noticed {{domain}}. Could we align on the brand guidelines?
+`;
+
+describe('validateImportedTemplate: templates for authorized partners stay internal and neutral', () => {
+  it('the built-in compliance note satisfies the rule, so a counsel copy of it imports cleanly', () => {
+    expect(complianceRuleErrors(builtinTemplates().find((t) => t.id === 'compliance-note')!)).toEqual([]);
+    const r = validateImportedTemplate(COMPLIANCE_SRC, 'note.md');
+    expect(r.ok).toBe(true);
+  });
+
+  it('accepts a neutral internal note with a new id for authorized_noncompliant', () => {
+    expect(validateImportedTemplate(NEUTRAL_NOTE, 'partner.md').ok).toBe(true);
+  });
+
+  it('templates for other classes are unaffected by the rule', () => {
+    // The demand-letter vocabulary is fine outside the authorized_noncompliant class.
+    expect(validateImportedTemplate(IMPORTED_OVERRIDE.replace('Approved text', 'Demand and cease text'), 'x.md').ok).toBe(true);
+  });
+
+  it.each([
+    ['compliance-note on channel email', COMPLIANCE_SRC.replace('channel: internal', 'channel: email'), /must use channel: internal \(found "email"\)/],
+    ['compliance-note on channel letter', COMPLIANCE_SRC.replace('channel: internal', 'channel: letter'), /must use channel: internal/],
+    ['compliance-note with a "to" field', COMPLIANCE_SRC.replace('channel: internal', 'channel: internal\nto: "{{registrant.email | optional}}"'), /must not have a "to" field/],
+    ['compliance-note with an empty "to" field', COMPLIANCE_SRC.replace('channel: internal', 'channel: internal\nto: ""'), /must not have a "to" field/],
+    ['compliance-note with an extra class', COMPLIANCE_SRC.replace('classes: authorized_noncompliant', 'classes: authorized_noncompliant, cybersquatting'), /exactly one class, authorized_noncompliant/],
+    ['compliance-note for a different class', COMPLIANCE_SRC.replace('classes: authorized_noncompliant', 'classes: cybersquatting'), /exactly one class, authorized_noncompliant \(found "cybersquatting"\)/],
+    ['compliance-note with no classes', COMPLIANCE_SRC.replace('classes: authorized_noncompliant\n', ''), /exactly one class/],
+    ['compliance-note with threat wording', COMPLIANCE_SRC.replace('Thanks,', 'You must CEASE use or face a Lawsuit.\nThanks,'), /"cease", "lawsuit"/],
+    ['compliance-note with threat wording in the subject', COMPLIANCE_SRC.replace('subject: "Brand guideline check', 'subject: "Demand'), /"demand"/],
+    ['a letter template attached to authorized_noncompliant', IMPORTED_OVERRIDE.replace('id: registrar-abuse', 'id: partner-threat').replace('classes: phishing_malware', 'classes: authorized_noncompliant'), /templates for "authorized_noncompliant" must use channel: internal/],
+    ['a built-in id re-targeted at authorized_noncompliant', IMPORTED_OVERRIDE.replace('classes: phishing_malware', 'classes: phishing_malware, authorized_noncompliant'), /exactly one class/],
+    ['an internal note for authorized_noncompliant that threatens', NEUTRAL_NOTE.replace('Could we align', 'We will seek damages unless you align'), /"damages"/],
+  ])('rejects %s', (_label, src, re) => {
+    const r = validateImportedTemplate(src, 'bad.md');
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join('\n')).toMatch(re);
+    expect(r.errors.every((e) => e.startsWith('bad.md: '))).toBe(true);
+  });
+
+  it('every forbidden word on its own is enough to reject (case-insensitive)', () => {
+    for (const w of COMPLIANCE_FORBIDDEN) {
+      const r = validateImportedTemplate(NEUTRAL_NOTE.replace('We noticed', `${w.toUpperCase()} We noticed`), 'w.md');
+      expect(r.ok, w).toBe(false);
+    }
   });
 });
 

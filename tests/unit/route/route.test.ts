@@ -81,6 +81,29 @@ describe('routing', () => {
     expect(routeFor('cybersquatting', { domain: 'acme.org' }).escalations.find((e) => e.id === 'urs')!.available).toBe(true);
     const de = routeFor('cybersquatting', { domain: 'acme.de' });
     expect(de.escalations.map((e) => e.id)).toContain('cctld-drp');
+    // URS on a ccTLD is "verify", not "no": a few ccTLD registries adopted it voluntarily.
+    const deUrs = de.escalations.find((e) => e.id === 'urs')!;
+    expect(deUrs.available).toBe(true);
+    expect(deUrs.note).toMatch(/gTLD procedure.*check the \.de registry/);
+    // IDN TLDs may be ccTLDs or gTLDs: verify, with a registry-policy escalation.
+    const idn = routeFor('cybersquatting', { domain: 'acme.xn--p1ai' });
+    expect(idn.escalations.find((e) => e.id === 'urs')!.note).toMatch(/IDN country-code TLD/);
+    expect(idn.escalations.find((e) => e.id === 'cctld-drp')!.explanation).toMatch(/^If \.xn--p1ai is an IDN country-code TLD/);
+  });
+
+  it('ACPA explanation states the in rem conditions and limits and the pre-1999 damages bar', () => {
+    const acpa = routeFor('cybersquatting', { domain: 'acme-login.com', facts: rich }).escalations.find((e) => e.id === 'acpa')!;
+    expect(acpa.explanation).toContain('cannot obtain personal jurisdiction over the registrant, or cannot find the registrant through due diligence (§ 1125(d)(2)(A)(ii))');
+    expect(acpa.explanation).toContain('In rem remedies are limited to forfeiture, cancellation or transfer of the domain (§ 1125(d)(2)(D)(i))');
+    expect(acpa.explanation).toContain('$1,000 to $100,000 per domain name');
+    expect(acpa.explanation).toContain('November 29, 1999');
+    expect(acpa.explanation).not.toMatch(/in rem action is possible when the registrant cannot be found/);
+  });
+
+  it('phishing explanation does not assert unverified ICANN contract duties as fact', () => {
+    const why = routeFor('phishing_malware', { domain: 'acme-login.com', facts: rich }).why.join(' ');
+    expect(why).not.toMatch(/must act on/);
+    expect(why).toContain('counsel to confirm the current provisions');
   });
 
   it('reverse domain name hijacking warning when the domain predates the mark rights', () => {
@@ -88,6 +111,11 @@ describe('routing', () => {
     const w = r.warnings.find((x) => x.id === 'rdnh')!;
     expect(w.level).toBe('danger');
     expect(w.dismissible).toBe(false);
+    // The RDAP date is the creation date, not necessarily the current holder's acquisition date.
+    expect(w.text).toContain('creation date per RDAP (2026-09-30)');
+    expect(w.text).toContain('WIPO Overview 3.0 §3.9');
+    expect(w.text).toMatch(/Check when the current holder acquired it/);
+    expect(routeFor('cybersquatting', { domain: 'acme-login.com' }).warnings.find((x) => x.id === 'rdnh-unknown')!.text).toMatch(/current holder acquired/);
     expect(routeFor('cybersquatting', { domain: 'acme-login.com', facts: rich, earliestRightsDate: '2020-01-01' }).warnings.find((x) => x.id === 'rdnh')).toBeUndefined();
     expect(routeFor('cybersquatting', { domain: 'acme-login.com' }).warnings.find((x) => x.id === 'rdnh-unknown')).toBeDefined();
   });
@@ -113,6 +141,32 @@ describe('routing', () => {
     for (const t of OUTBOUND) expect(locked).not.toContain(t);
     expect(r.why.join(' ')).toMatch(/Lamparello.*Bosley.*Taubman/);
     expect(effectiveTemplates(r, [{ id: 'counsel-consulted' }])).toEqual(expect.arrayContaining(['demand-letter']));
+  });
+
+  it('fair use → case parentheticals are accurate and §2.6.2 (<mark>.tld) is noted', () => {
+    const why = routeFor('fair_use', { domain: 'acme-sucks.com', facts: rich }).why.join(' ');
+    expect(why).not.toMatch(/often protected/);
+    expect(why).toMatch(/Lamparello.*?\(no likelihood of confusion; noncommercial gripe site at a misspelling/);
+    expect(why).toMatch(/Bosley.*?\(Lanham Act infringement claim failed because the use was noncommercial, but the ACPA claim was reinstated/);
+    expect(why).toMatch(/Taubman.*?\(noncommercial gripe site/);
+    expect(why).toContain('WIPO Overview 3.0 §2.6.2');
+  });
+
+  it('fair use → every escalation is counsel-only and unavailable until counsel decides', () => {
+    for (const d of ['acme-sucks.com', 'acme.shop', 'acme.de']) {
+      const r = routeFor('fair_use', { domain: d, facts: rich });
+      expect(r.escalations.length).toBeGreaterThan(0);
+      for (const e of r.escalations) {
+        expect(e.available, `${d} ${e.id}`).toBe(false);
+        expect(e.note, `${d} ${e.id}`).toMatch(/^Counsel only: /);
+      }
+    }
+  });
+
+  it('copied content → UDRP/ACPA escalations are marked counsel-only (trademark remedies, separate from the DMCA)', () => {
+    const r = routeFor('copied_content', { domain: 'acme-login.com', facts: rich });
+    expect(r.escalations.map((e) => e.id).sort()).toEqual(['acpa', 'udrp']);
+    for (const e of r.escalations) expect(e.note).toMatch(/^Counsel only: these are trademark remedies/);
   });
 
   it('authorized but noncompliant → ONLY the internal compliance note, never a legal threat', () => {
@@ -149,13 +203,30 @@ describe('TLD policy', () => {
     ['a.info', 'yes'],
     ['a.biz', 'yes'],
     ['a.shop', 'yes'],
-    ['a.de', 'no'],
-    ['a.co.uk', 'no'],
+    ['a.de', 'verify'],
+    ['a.co.uk', 'verify'],
     ['a.mobi', 'verify'],
+    ['a.pro', 'verify'],
+    ['a.asia', 'verify'],
+    ['a.gov', 'no'],
+    ['a.edu', 'no'],
+    ['a.xn--p1ai', 'verify'], // .рф, an IDN ccTLD
+    ['a.xn--3e0b707e', 'verify'], // .한국, an IDN ccTLD
+    ['a.xn--q9jyb4c', 'verify'], // an IDN gTLD: still verify, the form alone cannot tell
+    ['A.ORG.', 'yes'],
+    ['', 'verify'],
   ])('URS %s → %s', (d, e) => expect(ursEligibility(d).eligible).toBe(e));
-  it('UDRP: gTLD yes, ccTLD verify, .gov no', () => {
+
+  it('URS notes explain ccTLD and IDN cases', () => {
+    expect(ursEligibility('a.de').note).toMatch(/URS is an ICANN gTLD procedure.*a few have adopted it voluntarily; check the \.de registry's dispute policy/);
+    expect(ursEligibility('a.xn--p1ai').note).toMatch(/IDN country-code TLD.*or an IDN gTLD/);
+  });
+
+  it('UDRP: gTLD yes, ccTLD verify, IDN verify, .gov no', () => {
     expect(udrpEligibility('a.com').eligible).toBe('yes');
     expect(udrpEligibility('a.uk').eligible).toBe('verify');
     expect(udrpEligibility('a.gov').eligible).toBe('no');
+    expect(udrpEligibility('a.xn--p1ai').eligible).toBe('verify');
+    expect(udrpEligibility('a.xn--p1ai').note).toMatch(/IDN country-code TLD/);
   });
 });

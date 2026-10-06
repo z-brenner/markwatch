@@ -1,6 +1,6 @@
 # Markwatch templates
 
-Every `*.md` file in this folder except this README is a built-in draft template, bundled into the app at build time. Your legal team can also import its own counsel-approved templates at runtime (Drafts → Import template). An imported template whose `id` matches a built-in **replaces** that built-in for the case, which is the intended way to swap the placeholder language below for approved text. Imported templates are saved inside the case file.
+Every `*.md` file in this folder except this README is a built-in draft template, bundled into the app at build time. Your legal team can also import its own counsel-approved templates at runtime: open **Templates** in the sidebar and use **Import template files (.md)**. An imported template whose `id` matches a built-in **replaces** that built-in for the case, which is the intended way to swap the placeholder language below for approved text. Imported templates are saved inside the case file.
 
 Drafts are **plain text**. Markwatch never renders template content as HTML, so Markdown syntax (`**bold**`, `#` headings) shows up literally. Write plain text.
 
@@ -131,16 +131,33 @@ Values typed by the user are not listed. Data pasted manually after a blocked lo
 | `evidence.list` | Evidence linked to the domain: `<name> — SHA-256 <sha256>` (list). |
 | `score.total` | Markwatch heuristic score (ranking only, not a finding). |
 | `inventory.party`, `inventory.pattern` | Authorized party and matching inventory pattern, if the domain is in the inventory. |
-| `urs.eligible` | URS applicability from the TLD: `yes …` (.org/.info/.biz), `yes (verify) …` (other gTLDs), `no — …` (.com, .net and other legacy gTLDs; ccTLDs). |
-| `followUp.ack` | Registration Data Policy §10.5 acknowledgment date: today + 2 business days (weekends skipped, holidays not). |
-| `followUp.response` | §10.5 response date: `followUp.ack` + 30 calendar days. |
+| `urs.eligible` | URS applicability from the TLD, the same rule the route's URS escalation uses: `yes — <note>` (.org, .info, .biz and apparent post-2012 gTLDs, with a note to verify), `no — <note>` (.com, .net and restricted TLDs such as .gov), `verify — <note>` (ccTLDs, internationalized `xn--` TLDs, and legacy gTLDs whose URS status is unverified). |
+| `followUp.ack` | Registration Data Policy §10 acknowledgment date: today + 2 business days (weekends skipped, holidays not). Counsel to confirm paragraph numbers in the current policy text. |
+| `followUp.response` | Registration Data Policy §10 response date: `followUp.ack` + 30 calendar days. |
 
 ## Legal content rules (for built-ins, and recommended for imports)
 
 - Open with the banner line.
 - Wrap all legal prose in `[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: …]`. Counsel-approved imports replace these with approved text.
 - Never write facts into a template: registration numbers, dates, ownership and goods/services come only from merge fields (lookups or user input).
-- Never assert infringement, bad faith or liability as fact. Built-ins are tested: phrases such as "constitutes infringement", "infringes", "in bad faith", "is liable", "willful", "violates", "unlawful" or "illegal" may appear only inside placeholder brackets.
-- Notes for the user that must not be sent go inside `[INTERNAL NOTE — DELETE BEFORE SENDING: …]`.
+- Never assert infringement, bad faith or liability as fact. Built-ins are tested: phrases such as "constitutes infringement", "infringes", "in bad faith", "is liable", "willful", "violates", "unlawful" or "illegal" may appear only inside placeholder brackets. The one exception is a verbatim quotation of policy or statute text on its own line, written as `Policy text: “…”` (curly quotes), and only for quotations the content test lists as verified (currently UDRP ¶4(a)(i)–(iii)).
+- Outbound drafts state facts only. They do not state the sender's classification of the domain.
+- Notes for the user that must not be sent go inside `[INTERNAL NOTE — DELETE BEFORE SENDING: …]`:
+  - Use exactly that prefix, and close the note with `]` on the same or a later line.
+  - Do not put `[` or `]` inside a note, including inside merge-field hints, because exports remove notes with the pattern `/\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g`, which stops at the first `]`.
+  - In outbound templates (any channel except `internal`), notes hold drafting guidance only. Case strategy that would harm the mark owner if the note were sent by mistake (for example Reverse Domain Name Hijacking risk or price strategy) belongs in the internal UDRP evidence annex, not in an outbound draft.
 - The compliance note is internal and neutral and uses no legal-threat vocabulary at all.
 - Imported templates are limited to 200 KB of UTF-8 text.
+
+## Rules enforced on import
+
+Markwatch rejects an imported template, with the reason, when:
+
+- it has front-matter or merge-tag errors, contains NUL bytes, or is over 200 KB;
+- its `id` is `compliance-note`, or its `classes` include `authorized_noncompliant`, and it breaks any of these:
+  - `channel: internal`;
+  - no `to:` key at all (not even an empty one);
+  - `classes: authorized_noncompliant` and nothing else;
+  - none of these words anywhere in its title, description, subject or body, in any letter case: "infringe", "demand", "cease", "liable", "violation", "legal action", "lawsuit", "damages".
+
+So an authorized partner can only ever receive a neutral internal note: no threat template can be attached to that classification, even by import.
