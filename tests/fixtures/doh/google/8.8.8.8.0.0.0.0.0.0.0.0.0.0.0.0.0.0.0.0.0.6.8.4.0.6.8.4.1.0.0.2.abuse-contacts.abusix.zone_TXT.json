@@ -1,0 +1,23 @@
+{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question": [
+    {
+      "name": "8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone.",
+      "type": 16
+    }
+  ],
+  "Answer": [
+    {
+      "name": "8.8.8.8.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.6.8.4.0.6.8.4.1.0.0.2.abuse-contacts.abusix.zone.",
+      "type": 16,
+      "TTL": 300,
+      "data": "arin-contact@google.com,network-abuse@google.com"
+    }
+  ],
+  "Comment": "Response from 44.198.215.104."
+}
