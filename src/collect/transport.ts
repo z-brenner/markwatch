@@ -94,10 +94,8 @@ export async function guardedFetch(url: string, opts: GuardedFetchOptions, deps:
 
   try {
     const res = await deps.fetch(url, { ...BASE_INIT, mode: 'cors', headers: opts.headers ?? {}, signal: ctl.signal });
-    let text = await res.text();
     const max = opts.maxChars ?? DEFAULT_MAX_CHARS;
-    const truncated = text.length > max;
-    if (truncated) text = text.slice(0, max);
+    const { text, truncated } = await readLimited(res, max);
     if (res.status === 429) {
       const ra = res.headers.get('retry-after');
       return { ok: false, reason: 'rate_limited', status: 429, detail: `The server rate-limited this request (HTTP 429${ra ? `, retry after ${ra}` : ''}).` };
@@ -114,6 +112,31 @@ export async function guardedFetch(url: string, opts: GuardedFetchOptions, deps:
     clearTimeout(timer);
     opts.signal?.removeEventListener('abort', onAbort);
   }
+}
+
+/**
+ * Reads at most `max` characters of a body, cancelling the stream past the
+ * limit so a huge response (e.g. a broad crt.sh search) cannot exhaust memory.
+ */
+async function readLimited(res: Response, max: number): Promise<{ text: string; truncated: boolean }> {
+  if (!res.body) {
+    const all = await res.text();
+    return all.length > max ? { text: all.slice(0, max), truncated: true } : { text: all, truncated: false };
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    text += decoder.decode(value, { stream: true });
+    if (text.length > max) {
+      await reader.cancel().catch(() => undefined);
+      return { text: text.slice(0, max), truncated: true };
+    }
+  }
+  text += decoder.decode();
+  return { text, truncated: false };
 }
 
 async function classifyOpaqueFailure(url: string, err: unknown, deps: TransportDeps): Promise<FetchOutcome> {

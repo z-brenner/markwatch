@@ -11,7 +11,7 @@ export const VERDICT_LABEL: Record<RegistrationVerdict, { label: string; tone: '
   not_delegated: { label: 'Not in DNS (unverified)', tone: 'amber' },
   available: { label: 'Available (RDAP 404)', tone: 'green' },
   blocked: { label: 'Lookup blocked', tone: 'amber' },
-  unknown: { label: 'Not checked', tone: 'gray' },
+  unknown: { label: 'Unknown / not checked', tone: 'gray' },
 };
 
 const PAGE = 200;

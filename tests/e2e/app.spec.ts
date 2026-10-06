@@ -193,6 +193,28 @@ test.describe('Markwatch end to end (network mocked)', () => {
     await expect(drafts.first()).toHaveText(/compliance note/i);
   });
 
+  test('parked domain: parking-provider complaint comes first, with the provider identified from nameservers', async ({ page, mock }) => {
+    await setupCase(page, mock);
+    await discoverAndResolve(page);
+    await openDomain(page, 'acmee.com', 'registered');
+    await expect(page.getByTestId('score-items')).toContainText('parking provider (Sedo)');
+    await classify(page, 'Parked with ads');
+    await expect(page.getByText('1. File a trademark complaint with the parking provider')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'web form' }).first()).toHaveAttribute('href', /sedo\.com/);
+  });
+
+  test('unrelated requires a recorded reason', async ({ page, mock }) => {
+    await setupCase(page, mock);
+    await discoverAndResolve(page);
+    await openDomain(page, 'acmee.com', 'registered');
+    await page.getByLabel('Classification', { exact: true }).selectOption({ label: 'Unrelated' });
+    const save = page.getByRole('button', { name: 'Save classification' });
+    await expect(save).toBeDisabled();
+    await page.getByLabel('Classification note').fill('Different business, unrelated goods');
+    await save.click();
+    await expect(page.getByText('Recommended route: No action')).toBeVisible();
+  });
+
   test('DMCA route states that the DMCA covers copyright, not trademark', async ({ page, mock }) => {
     await setupCase(page, mock);
     await discoverAndResolve(page);
