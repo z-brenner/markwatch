@@ -18,7 +18,7 @@ import type {
   TemplateId,
 } from '../types';
 import { CLASSIFICATION_LABELS } from '../types';
-import { udrpEligibility, ursEligibility, isCcTld, tldOf } from './tld';
+import { udrpEligibility, ursEligibility, isCcTld, isIdnTld, tldOf } from './tld';
 
 export interface RouteInput {
   domain: string;
@@ -93,6 +93,24 @@ function parkingContact(input: RouteInput): RouteContact | undefined {
 
 // ─── escalations ───
 
+const ACPA_EXPLANATION = [
+  'Civil action under US federal law. Against the registrant (in personam, § 1125(d)(1)), the court may order forfeiture, cancellation or transfer of the domain (§ 1125(d)(1)(C)), and the plaintiff may elect statutory damages of $1,000 to $100,000 per domain name instead of actual damages and profits (§ 1117(d)).',
+  'Statutory damages are not available for registration, trafficking or use that occurred before November 29, 1999, when the ACPA was enacted.',
+  'An in rem action against the domain itself (§ 1125(d)(2)) is available only if the plaintiff cannot obtain personal jurisdiction over the registrant, or cannot find the registrant through due diligence (§ 1125(d)(2)(A)(ii)); it is filed in the judicial district where the registrar, registry or other domain name authority that registered or assigned the domain is located.',
+  'In rem remedies are limited to forfeiture, cancellation or transfer of the domain (§ 1125(d)(2)(D)(i)): no damages.',
+].join(' ');
+
+const COUNSEL_ONLY = 'Counsel only: ';
+
+/** Marks every escalation as a counsel-only decision; `lock` also makes it unavailable until counsel decides. */
+function counselOnly(list: RouteEscalation[], reason: string, lock: boolean): RouteEscalation[] {
+  return list.map((e) => ({
+    ...e,
+    available: lock ? false : e.available,
+    note: `${COUNSEL_ONLY}${reason}${e.note ? ` ${e.note}` : ''}`,
+  }));
+}
+
 function escalations(domain: string): RouteEscalation[] {
   const udrp = udrpEligibility(domain);
   const urs = ursEligibility(domain);
@@ -121,11 +139,19 @@ function escalations(domain: string): RouteEscalation[] {
       available: true,
       note: 'See the registry listed in the IANA root zone database.',
     });
+  } else if (isIdnTld(tld)) {
+    out.push({
+      id: 'cctld-drp',
+      title: `.${tld} registry dispute policy`,
+      explanation: `If .${tld} is an IDN country-code TLD, its registry sets its own dispute policy and eligibility rules.`,
+      available: true,
+      note: 'Check the IANA root zone database for the TLD type and its registry.',
+    });
   }
   out.push({
     id: 'acpa',
     title: 'ACPA action (15 U.S.C. § 1125(d))',
-    explanation: 'US federal civil action. Remedies include transfer or cancellation and statutory damages of $1,000 to $100,000 per domain (§ 1117(d)). An in rem action is possible when the registrant cannot be found (§ 1125(d)(2)).',
+    explanation: ACPA_EXPLANATION,
     available: true,
     note: 'Litigation. Requires counsel.',
   });
@@ -138,14 +164,19 @@ function rdnhWarning(input: RouteInput): RouteWarning | undefined {
   const reg = input.facts?.rdap?.registered;
   const rights = input.earliestRightsDate;
   if (!reg) {
-    return { id: 'rdnh-unknown', level: 'info', dismissible: true, text: 'Registration date unknown. Before escalating, confirm the domain was not registered before your mark rights arose (reverse domain name hijacking risk).' };
+    return {
+      id: 'rdnh-unknown',
+      level: 'info',
+      dismissible: true,
+      text: 'Creation date unknown (no RDAP registration date). Before escalating, check when the current holder acquired the domain and confirm that was not before your mark rights arose (Reverse Domain Name Hijacking risk).',
+    };
   }
   if (rights && Date.parse(reg) < Date.parse(rights)) {
     return {
       id: 'rdnh',
       level: 'danger',
       dismissible: false,
-      text: `The domain was registered (${reg.slice(0, 10)}) before your earliest recorded mark rights (${rights}). Bad-faith registration is hard to show, and an aggressive complaint risks a finding of Reverse Domain Name Hijacking. Consult counsel.`,
+      text: `The creation date per RDAP (${reg.slice(0, 10)}) is before your earliest recorded mark rights (${rights}). The creation date is not necessarily when the current holder acquired the domain: under the UDRP, a transfer to a new holder is generally treated as a new registration (WIPO Overview 3.0 §3.9). Check when the current holder acquired it (for example from historical registration data or archived pages) before relying on either date. If the current holder held it before your rights arose, bad-faith registration is hard to show and an aggressive complaint risks a finding of Reverse Domain Name Hijacking. Consult counsel.`,
     };
   }
   return undefined;
@@ -190,7 +221,7 @@ function routeByClass(c: Classification, input: RouteInput): Route {
       const r = base(c, 'Report to the registrar and the host now');
       const hosts = hostContacts(input);
       r.why.push(
-        'Phishing and malware are DNS abuse that registrars must act on under their ICANN agreements, and hosts act on them under their acceptable-use policies.',
+        'Registrars and hosts generally act on phishing and malware reports under their abuse and acceptable-use policies; ICANN-accredited registrars also have contractual abuse-handling obligations (counsel to confirm the current provisions).',
         'Abuse desks act fastest on clear evidence: capture screenshots and URLs before reporting, because sites often go down once reported.',
       );
       r.steps.push(
@@ -218,7 +249,11 @@ function routeByClass(c: Classification, input: RouteInput): Route {
         id: 'dmca-fair-use-considered',
         text: 'I confirm that the copied material is a copyrighted work we own or are authorized to enforce, and that we have considered whether the use is fair use.',
       };
-      r.escalations = escalations(input.domain).filter((e) => e.id === 'acpa' || e.id === 'udrp');
+      r.escalations = counselOnly(
+        escalations(input.domain).filter((e) => e.id === 'acpa' || e.id === 'udrp'),
+        'these are trademark remedies, separate from the copyright notice; counsel decides whether they fit.',
+        false,
+      );
       return r;
     }
     case 'cybersquatting': {
@@ -281,8 +316,8 @@ function routeByClass(c: Classification, input: RouteInput): Route {
     case 'fair_use': {
       const r = base(c, 'Consult counsel before any contact');
       r.why.push(
-        'Noncommercial criticism and commentary sites are often protected. See Lamparello v. Falwell, 420 F.3d 309 (4th Cir. 2005); Bosley Medical Institute v. Kremer, 403 F.3d 672 (9th Cir. 2005); Taubman Co. v. Webfeats, 319 F.3d 770 (6th Cir. 2003).',
-        'Under the UDRP, legitimate noncommercial or fair use is a defense (¶4(c)(iii); WIPO Overview 3.0 §2.6 for criticism sites, §2.7 for fan sites).',
+        'Courts have rejected some trademark claims against noncommercial criticism sites, but the outcome depends on the facts and on the claim. See Lamparello v. Falwell, 420 F.3d 309 (4th Cir. 2005) (no likelihood of confusion; noncommercial gripe site at a misspelling of the plaintiff’s name); Bosley Medical Institute, Inc. v. Kremer, 403 F.3d 672 (9th Cir. 2005) (Lanham Act infringement claim failed because the use was noncommercial, but the ACPA claim was reinstated: the ACPA has no commercial-use requirement); Taubman Co. v. Webfeats, 319 F.3d 770 (6th Cir. 2003) (noncommercial gripe site; preliminary injunction reversed).',
+        'Under the UDRP, legitimate noncommercial or fair use can show rights or legitimate interests (¶4(c)(iii); WIPO Overview 3.0 §2.6 for criticism sites, §2.7 for fan sites). But a domain identical to the mark (<mark>.tld) is generally not treated as legitimate even for criticism, because it can be taken as the mark owner’s own site (WIPO Overview 3.0 §2.6.2).',
         'A threat letter can backfire: declaratory-judgment or anti-SLAPP exposure, and publicity that amplifies the criticism.',
       );
       r.steps.push(
@@ -293,7 +328,7 @@ function routeByClass(c: Classification, input: RouteInput): Route {
       );
       r.warnings.push({ id: 'fair-use', level: 'danger', dismissible: false, text: 'Possible fair use or criticism. Do not contact the registrant, host or registrar until counsel has reviewed it.' });
       r.requiresAck = { id: 'counsel-consulted', text: 'Counsel has reviewed this domain and approved proceeding with outreach.' };
-      r.escalations = escalations(input.domain);
+      r.escalations = counselOnly(escalations(input.domain), 'not offered on a possible fair-use or criticism site until counsel decides whether to proceed.', true);
       return r;
     }
     case 'authorized_noncompliant': {

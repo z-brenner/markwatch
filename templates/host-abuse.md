@@ -19,7 +19,6 @@ Domain: {{domain}}
 IP addresses: {{host.ips | hint: "IP addresses the domain resolves to (DNS A/AAAA)"}}
 Network holder: {{host.networkOrg}}
 Network name: {{host.networkName | optional}}
-Sender's classification: {{classification.label}}
 
 CDN NOTE
 CDN / reverse proxy in front of the site, if any: {{cdn.name | optional}}
@@ -32,7 +31,7 @@ WHAT WAS OBSERVED
 EVIDENCE (SHA-256 of each file)
 {{evidence.list | lines | hint: "Attach evidence (screenshots, captured pages) to the case, or dismiss with a reason"}}
 
-[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: paragraph referring to the provider's acceptable use policy and abuse process [counsel to confirm which policy applies].]
+[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: paragraph referring to the provider's acceptable use policy and abuse process (counsel to confirm which policy applies).]
 
 REQUESTED ACTION
 {{input.requestedAction | hint: "The action you ask the provider to take. Counsel to approve the wording."}}

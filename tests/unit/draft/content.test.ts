@@ -1,10 +1,14 @@
 // Content guards over every built-in template. These encode the legal content
 // rules: banner first, no unbracketed legal conclusions, a neutral compliance
 // note, the DMCA statutory elements, and no hard-coded registration numbers.
+// Verbatim quotations of policy or statute text are the one exception to the
+// conclusion denylist, and only on a "Policy text: “…”" line whose quotation
+// is in VERIFIED_QUOTATIONS below.
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CONTEXT_FIELDS } from '../../../src/core/draft/context';
 import { BANNER } from '../../../src/core/draft/merge';
+import { COMPLIANCE_FORBIDDEN } from '../../../src/core/draft/registry';
 import { parseTemplate } from '../../../src/core/draft/template';
 import { BUILTIN_TEMPLATE_IDS } from '../../../src/core/types';
 
@@ -15,7 +19,25 @@ const sources = Object.fromEntries(files.map((f) => [f.replace(/\.md$/, ''), rea
 const PLACEHOLDER_PREFIX = '[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: ';
 
 const DENYLIST = ['constitutes infringement', 'infringes', 'is infringing', 'in bad faith', 'bad faith registration', 'is liable', 'you are liable', 'willful', 'violates', 'unlawful', 'illegal'];
-const COMPLIANCE_FORBIDDEN = ['infringe', 'demand', 'cease', 'liable', 'violation', 'legal action', 'lawsuit', 'damages'];
+
+/**
+ * Policy and statute text quoted verbatim in templates. A "Policy text: “…”"
+ * line is exempt from the denylist only when its quotation is listed here, so
+ * a template cannot launder a conclusion by putting it in quotation marks.
+ */
+const VERIFIED_QUOTATIONS = [
+  // UDRP ¶4(a)(i)–(iii) (ICANN Uniform Domain Name Dispute Resolution Policy).
+  '(i) your domain name is identical or confusingly similar to a trademark or service mark in which the complainant has rights; and',
+  '(ii) you have no rights or legitimate interests in respect of the domain name; and',
+  '(iii) your domain name has been registered and is being used in bad faith.',
+];
+
+/** Prefix every internal note must use; the export step strips /\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g. */
+const INTERNAL_NOTE_PREFIX = '[INTERNAL NOTE — DELETE BEFORE SENDING';
+const INTERNAL_NOTE_RE = /\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g;
+
+/** Words that signal case strategy, which must never sit in a note inside an outbound draft. */
+const STRATEGY_WORDS = ['hijacking', 'asking price', 'negotiat', 'leverage', 'settle', 'weak', 'strategy', 'raise the price'];
 
 const DMCA_ELEMENTS = [
   '(i) A physical or electronic signature of a person authorized to act on behalf of the owner of an exclusive right that is allegedly infringed.',
@@ -50,6 +72,24 @@ function stripPlaceholders(text: string): string {
   return out;
 }
 
+const POLICY_LINE_RE = /^Policy text: “([^”\n]*)”$/;
+
+/** Blanks out "Policy text: “…”" lines whose quotation is verified verbatim text; other lines are kept as they are. */
+function stripVerifiedQuotations(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const m = POLICY_LINE_RE.exec(line.trimEnd());
+      return m && VERIFIED_QUOTATIONS.includes(m[1] ?? '') ? '' : line;
+    })
+    .join('\n');
+}
+
+/** Text that the denylist applies to: everything except placeholders and verified verbatim quotations. */
+function outsideExemptions(src: string): string {
+  return stripPlaceholders(stripVerifiedQuotations(src)).toLowerCase().replace(/\s+/g, ' ');
+}
+
 function bodyOf(src: string): string {
   return src.replace(/\r\n/g, '\n').split('\n---\n').slice(1).join('\n---\n');
 }
@@ -62,6 +102,28 @@ describe('guard helpers (self-test, so the guards cannot pass vacuously)', () =>
   it('a denylisted phrase outside a placeholder is detected', () => {
     const outside = stripPlaceholders(`The registrant acted in bad faith. ${PLACEHOLDER_PREFIX}is liable]`).toLowerCase();
     expect(DENYLIST.filter((p) => outside.includes(p))).toEqual(['in bad faith']);
+  });
+  it('a verified verbatim quotation on a Policy text line is exempt from the denylist', () => {
+    const src = 'Policy text: “(iii) your domain name has been registered and is being used in bad faith.”';
+    expect(DENYLIST.filter((p) => outsideExemptions(src).includes(p))).toEqual([]);
+  });
+  it('an unquoted "in bad faith" assertion is still detected, even next to a verified quotation', () => {
+    const src = 'Policy text: “(iii) your domain name has been registered and is being used in bad faith.”\nThe registrant registered the domain in bad faith.';
+    expect(DENYLIST.filter((p) => outsideExemptions(src).includes(p))).toEqual(['in bad faith']);
+  });
+  it('quotation marks alone do not exempt a conclusion: the quotation must be verified policy text', () => {
+    for (const src of [
+      'Policy text: “The registrant acted in bad faith.”',
+      '“your domain name has been registered and is being used in bad faith.”',
+      'Note: Policy text: “(iii) your domain name has been registered and is being used in bad faith.”',
+      'Policy text: “(iii) your domain name has been registered and is being used in bad faith.” It was.',
+    ]) {
+      expect(DENYLIST.filter((p) => outsideExemptions(src).includes(p)), src).toEqual(['in bad faith']);
+    }
+  });
+  it('the internal-note regex removes a well-formed note completely and exposes a nested bracket', () => {
+    expect('a [INTERNAL NOTE — DELETE BEFORE SENDING: x {{y | optional}}] b'.replace(INTERNAL_NOTE_RE, '')).toBe('a  b');
+    expect('[INTERNAL NOTE — DELETE BEFORE SENDING: x [nested] tail]'.replace(INTERNAL_NOTE_RE, '')).toBe(' tail]');
   });
 });
 
@@ -84,9 +146,40 @@ describe.each(Object.entries(sources))('content guards: %s', (name, src) => {
     expect(bodyOf(src).split('\n')[0]).toBe(BANNER);
   });
 
-  it('legal conclusion phrases appear only inside [PLACEHOLDER …] brackets', () => {
-    const outside = stripPlaceholders(src).toLowerCase().replace(/\s+/g, ' ');
+  it('legal conclusion phrases appear only inside [PLACEHOLDER …] brackets or verified verbatim policy quotations', () => {
+    const outside = outsideExemptions(src);
     for (const phrase of DENYLIST) expect(outside, `"${phrase}" outside a placeholder in ${name}`).not.toContain(phrase);
+  });
+
+  it('every "Policy text:" line quotes verified verbatim text exactly', () => {
+    for (const line of src.split('\n').filter((l) => l.startsWith('Policy text:'))) {
+      const m = POLICY_LINE_RE.exec(line.trimEnd());
+      expect(m, line).not.toBeNull();
+      expect(VERIFIED_QUOTATIONS, line).toContain(m?.[1]);
+    }
+  });
+
+  it('every internal note uses the exact prefix and is removed completely by the export regex', () => {
+    const occurrences = src.split('[INTERNAL NOTE').length - 1;
+    expect(src.split(INTERNAL_NOTE_PREFIX).length - 1, `non-standard internal-note prefix in ${name}`).toBe(occurrences);
+    expect(src).not.toMatch(/INTERNAL NOTE(?! — DELETE BEFORE SENDING)/);
+    const notes = src.match(INTERNAL_NOTE_RE) ?? [];
+    expect(notes.length, name).toBe(occurrences);
+    for (const note of notes) {
+      // No nested "[" (its "]" would end the match early) and whole merge tags only.
+      expect(note.slice(1), note.slice(0, 60)).not.toContain('[');
+      expect(note.split('{{').length, note.slice(0, 60)).toBe(note.split('}}').length);
+    }
+    expect(src.replace(INTERNAL_NOTE_RE, '')).not.toContain('INTERNAL NOTE');
+  });
+
+  it('internal notes in outbound drafts hold drafting guidance only, never case strategy', () => {
+    const r = parseTemplate(src);
+    expect(r.ok).toBe(true);
+    if (!r.ok || r.template.channel === 'internal') return;
+    for (const note of src.match(INTERNAL_NOTE_RE) ?? []) {
+      for (const w of STRATEGY_WORDS) expect(note.toLowerCase(), `"${w}" in an internal note of ${name}`).not.toContain(w);
+    }
   });
 
   it('every placeholder uses the standard marker and closes', () => {
@@ -143,6 +236,21 @@ describe('template-specific guards', () => {
     expect(src).toContain('Lenz v. Universal Music Corp., 815 F.3d 1145 (9th Cir. 2016)');
   });
 
+  it('outbound reports do not state the sender’s classification (facts only)', () => {
+    for (const id of ['registrar-abuse', 'host-abuse', 'dmca-notice', 'demand-letter', 'disclosure-request']) {
+      const src = sources[id] ?? '';
+      expect(src, id).not.toContain('classification.label');
+      expect(src, id).not.toMatch(/Sender's classification/i);
+    }
+  });
+
+  it('demand-letter keeps strategy (RDNH, sale price) out; the internal annex carries it', () => {
+    expect(sources['demand-letter']).not.toMatch(/hijacking|asking price|negotiat/i);
+    expect(sources['udrp-annex']).toMatch(/Reverse Domain Name Hijacking/);
+    expect(sources['udrp-annex']).toMatch(/asking price/);
+    expect(sources['udrp-annex']).toContain('WIPO Overview 3.0 §3.9');
+  });
+
   it('registrar-abuse references the RAA only inside a placeholder', () => {
     const src = sources['registrar-abuse'] ?? '';
     expect(src).toContain('Registrar Accreditation Agreement');
@@ -165,10 +273,19 @@ describe('template-specific guards', () => {
     expect(src).toContain('A. ICANN RDRS COPY SHEET');
     expect(src).toContain('B. DIRECT REQUEST TO THE REGISTRAR UNDER THE ICANN REGISTRATION DATA POLICY §10');
     expect(src).toContain('https://rdrs.icann.org');
-    expect(src).toContain('Request category: IP holder');
-    expect(src).toMatch(/maximum 2,000 characters/);
-    expect(src).toMatch(/PDF only, at most 5 files, each at most 5 MB/);
     expect(src).toMatch(/does not cover ccTLDs/);
+    // RDRS form details are unverified in PLAN §17: they appear only inside an internal note that says to verify them.
+    const rdrsNote = (src.match(INTERNAL_NOTE_RE) ?? []).find((n) => n.includes('RDRS form')) ?? '';
+    expect(rdrsNote).toMatch(/^\[INTERNAL NOTE — DELETE BEFORE SENDING: verify these against the live RDRS form/);
+    for (const detail of ['"IP holder"', 'at most 2,000 characters', 'PDF only, at most 5 files, each at most 5 MB']) {
+      expect(rdrsNote, detail).toContain(detail);
+    }
+    const outsideNotes = src.replace(INTERNAL_NOTE_RE, '');
+    expect(outsideNotes).not.toMatch(/2,000|5 MB|PDF only/);
+    expect(outsideNotes).toContain('Request category: IP holder (verify on the live form)');
+    // Paragraph numbers inside §10 are not asserted.
+    expect(src).not.toMatch(/§10\.[0-9]/);
+    expect(src).toContain('Registration Data Policy §10 (counsel to confirm paragraph numbers in the current text)');
     for (const p of ['input.requestorEntityType', 'input.dataElements', 'input.disclosureRationale', 'input.goodFaithAffirmation', 'input.lawfulProcessingAgreement', 'input.legalBasis', 'followUp.ack', 'followUp.response']) {
       expect(src, p).toContain(`{{${p}`);
     }
@@ -179,6 +296,9 @@ describe('template-specific guards', () => {
     expect(src).toContain('ELEMENT 1 — UDRP ¶4(a)(i)');
     expect(src).toContain('ELEMENT 2 — UDRP ¶4(a)(ii)');
     expect(src).toContain('ELEMENT 3 — UDRP ¶4(a)(iii)');
+    // Each element quotes ¶4(a) verbatim.
+    const lines = src.split('\n');
+    for (const q of VERIFIED_QUOTATIONS) expect(lines, q.slice(0, 20)).toContain(`Policy text: “${q}”`);
     expect(src).toContain('{{urs.eligible}}');
     expect(src).toContain('{{evidence.list | lines');
   });
@@ -188,6 +308,13 @@ describe('templates/README.md', () => {
   const readme = readFileSync(new URL('README.md', DIR), 'utf8');
   it('documents every context path', () => {
     for (const f of CONTEXT_FIELDS) expect(readme, f.path).toContain(`\`${f.path}\``);
+  });
+  it('documents the import location and the import rules', () => {
+    expect(readme).toContain('**Templates** in the sidebar');
+    expect(readme).toContain('**Import template files (.md)**');
+    expect(readme).not.toContain('Drafts → Import template');
+    expect(readme).toContain(INTERNAL_NOTE_PREFIX);
+    for (const w of COMPLIANCE_FORBIDDEN) expect(readme, w).toContain(`"${w}"`);
   });
   it('documents the banner and the modifiers', () => {
     expect(readme).toContain(BANNER);

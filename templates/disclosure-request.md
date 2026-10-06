@@ -20,14 +20,16 @@ A. ICANN RDRS COPY SHEET
 Paste each line into the matching field at https://rdrs.icann.org (logged-in portal; there is no API). Verify field names against the live form.
 ========================================================================
 
+[INTERNAL NOTE — DELETE BEFORE SENDING: verify these against the live RDRS form before relying on them. The request category, description limit and attachment rules below come from Markwatch's design notes and have not been checked against the current form: request category "IP holder"; description at most 2,000 characters; attachments PDF only, at most 5 files, each at most 5 MB.]
+
 Domain name: {{domain}}
-Request category: IP holder
+Request category: IP holder (verify on the live form)
 Data elements requested: {{input.dataElements | hint: "Data elements requested, e.g. registrant name, organization, email, telephone, postal address"}}
 Priority: {{input.rdrsPriority | hint: "Priority as offered by the form; reserve an urgent priority for imminent threats"}}
-Description (maximum 2,000 characters; check the length before pasting):
-{{input.rdrsDescription | hint: "Factual description of the request and why the data is needed, at most 2,000 characters"}}
+Description (check the live form's length limit before pasting):
+{{input.rdrsDescription | hint: "Factual description of the request and why the data is needed, within the live form's length limit"}}
 Legal basis: {{input.legalBasis | hint: "Legal basis selected with counsel (choose the matching option on the form)"}}
-Attachments: PDF only, at most 5 files, each at most 5 MB. Evidence in this case (SHA-256):
+Attachments (check the live form's file type, count and size limits). Evidence in this case (SHA-256):
 {{evidence.list | lines | optional}}
 
 ========================================================================
@@ -71,7 +73,7 @@ Rationale for this specific request:
 {{sender.title | optional}}
 {{sender.organization}}
 
-[INTERNAL NOTE — DELETE BEFORE SENDING: Follow-up dates if this request is sent today ({{today}}). Under Registration Data Policy §10.5 the registrar acknowledges within 2 business days and responds within 30 calendar days; a denial must give a rationale (§10.6). Acknowledgment expected by: {{followUp.ack}} (weekends skipped; public holidays not accounted for). Response expected by: {{followUp.response}}. Recompute if the request is sent on a later date.]
+[INTERNAL NOTE — DELETE BEFORE SENDING: Follow-up dates if this request is sent today ({{today}}). Under Registration Data Policy §10 (counsel to confirm paragraph numbers in the current text), the registrar acknowledges within 2 business days and responds within 30 calendar days, and a denial must give a rationale. Acknowledgment expected by: {{followUp.ack}} (weekends skipped; public holidays not accounted for). Response expected by: {{followUp.response}}. Recompute if the request is sent on a later date.]
 
 Sources:
 {{sources}}

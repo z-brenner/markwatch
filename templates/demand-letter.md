@@ -10,7 +10,7 @@ subject: "Regarding the domain name {{domain}}"
 ---
 DRAFT. Attorney review required before sending.
 
-[INTERNAL NOTE — DELETE BEFORE SENDING: (1) Compare the registration date ({{registration.created | optional}}) with the first-use and registration dates in the mark rights below. If the domain was registered before the mark rights arose, consult counsel before sending (risk of a Reverse Domain Name Hijacking finding in any later UDRP). (2) If the domain is offered for sale, contacting the registrant can raise the asking price and an inquiry can look like a negotiation; consider capturing evidence first. (3) If RDAP shows the registrant as redacted ({{registrant.redacted | optional}}), obtain the registrant's details through the disclosure request before sending.]
+[INTERNAL NOTE — DELETE BEFORE SENDING: (1) Review this domain's route warnings and the internal evidence outline with counsel before sending this letter. (2) If RDAP shows the registrant as redacted ({{registrant.redacted | optional}}), obtain the registrant's name and address through the disclosure request first. (3) Every bracketed placeholder must be replaced with counsel-approved text or removed.]
 
 {{today}}
 

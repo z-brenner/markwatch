@@ -20,7 +20,6 @@ Unicode form: {{domainUnicode | optional}}
 Sponsoring registrar: {{registrar.name}} (IANA ID {{registrar.ianaId | hint: "Registrar IANA ID (RDAP publicIds)"}})
 Registration created: {{registration.created | optional}}
 Registration status: {{registration.status | optional}}
-Sender's classification: {{classification.label}}
 
 OBSERVED DNS AND HOSTING
 Nameservers: {{dns.ns | hint: "Nameservers (DNS NS lookup)"}}
@@ -36,7 +35,7 @@ WHAT WAS OBSERVED
 EVIDENCE (SHA-256 of each file)
 {{evidence.list | lines | hint: "Attach evidence (screenshots, captured pages) to the case, or dismiss with a reason"}}
 
-[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: paragraph referring to the registrar's obligations under its ICANN Registrar Accreditation Agreement to take action on reports of DNS abuse [counsel to confirm the applicable provision, e.g. the abuse-report section of the RAA as amended by the DNS abuse amendments, and quote its current text].]
+[PLACEHOLDER LEGAL LANGUAGE — replace with counsel-approved text: optional paragraph referring to the registrar's abuse-handling obligations under its ICANN Registrar Accreditation Agreement (counsel to confirm whether and which provision applies, for example the abuse-report provisions as amended by the 2024 DNS abuse amendments, and to quote its current text).]
 
 REQUESTED ACTION
 {{input.requestedAction | hint: "The action you ask the registrar to take (e.g. investigate and act under its abuse policy). Counsel to approve the wording."}}
