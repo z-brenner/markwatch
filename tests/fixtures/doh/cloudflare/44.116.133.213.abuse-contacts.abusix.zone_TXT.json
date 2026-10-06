@@ -1,0 +1,22 @@
+{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": false,
+  "CD": false,
+  "Question": [
+    {
+      "name": "44.116.133.213.abuse-contacts.abusix.zone",
+      "type": 16
+    }
+  ],
+  "Answer": [
+    {
+      "name": "44.116.133.213.abuse-contacts.abusix.zone",
+      "type": 16,
+      "TTL": 300,
+      "data": "\"abuse@hetzner.com\""
+    }
+  ]
+}

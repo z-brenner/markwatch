@@ -1,0 +1,2283 @@
+{
+ "probedAt": "2026-10-05",
+ "browser": "Chromium 141 (Playwright 1.56.1, headless)",
+ "bootstrapPublication": "2026-09-30T23:00:03Z",
+ "method": "fetch() of <base>/domain/nic.<firstTld> from an http://localhost page and a file:// page; one request per host",
+ "caveat": "Run from a cloud sandbox behind a TLS-intercepting egress proxy with a shared egress IP. 429s and 502s seen here may not reproduce from an end user's network.",
+ "hosts": [
+  {
+   "host": "ccrdap.twnic.tw",
+   "tlds": 2,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "keetmans.omadhina.co.na",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "nic.samsung",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "pubapi.registry.google",
+   "tlds": 46,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap-merck.dns.business",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.aliregistry.cn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.bhregistry.bh",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.blog.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.ca.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.cctld.au",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.cctld.kg",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.cctld.uz",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.centralnic.com",
+   "tlds": 91,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.centralnicregistry.com",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.crown.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.dns.pl",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.eco.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.fi",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.flexireg.net",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.gmoregistry.net",
+   "tlds": 46,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.gtlds.nic.br",
+   "tlds": 5,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.hostmaster.ua",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.iana.org",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.identitydigital.services",
+   "tlds": 450,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.isnic.is",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.kenic.or.ke",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.kiwi.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.lbdr.org.lb",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.mls.fury.ca",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.mobile-registry.com",
+   "tlds": 12,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.ngtld.cn",
+   "tlds": 7,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aaa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aarp",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.able",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.abogado",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.abudhabi",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.accountant",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aco",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ad",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.adult",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aetna",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.afl",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.africa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aig",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.airtel",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ally",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.alsace",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.alstom",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.americanexpress",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.americanfamily",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.amex",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.amfam",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.amica",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.amsterdam",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.analytics",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.anz",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.apple",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.aquarelle",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.ar",
+   "tlds": 1,
+   "http": "timeout",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.arab",
+   "tlds": 1,
+   "http": "readable",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.aramco",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.as",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.athleta",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.auspost",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.axa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.banamex",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bank",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.barcelona",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.baseball",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.basketball",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bauhaus",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.bayern",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.bcn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.beer",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.berlin",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bharti",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bible",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bid",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.biz",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.blackfriday",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.booking",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bostik",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.boston",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.brussels",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.buzz",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.bzh",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.calvinklein",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.capetown",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.capitalone",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.caravan",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.casa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cat",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.catholic",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cba",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cbn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cbre",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.chase",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.chintai",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cisco",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.citi",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.club",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.commbank",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.compare",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cooking",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.corsica",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.courses",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cpa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cr",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.cricket",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cuisinella",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cv",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.cz",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.date",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.dds",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.dell",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.design",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.download",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.dubai",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.dupont",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.durban",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.earth",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.erni",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.eurovision",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.eus",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.faith",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.farmers",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.fashion",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ferrero",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.film",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.firmdale",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.fishing",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.fit",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.flickr",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.flir",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ford",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.fox",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.fr",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.frontier",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ftr",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gal",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gap",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.garden",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gay",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gdn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gea",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.george",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gmx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.godaddy",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gov",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.grainger",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.grocery",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.gs",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hamburg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hbo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.health",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.homegoods",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.homesense",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.horse",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hotels",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hsbc",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ht",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.hyatt",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ibm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ifm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ikano",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ink",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.insurance",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.intuit",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ipiranga",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.itau",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.jmp",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.joburg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.jpmorgan",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.jprs",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.kpmg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.krd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.lacaixa",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.lanxess",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.latrobe",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.law",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.leclerc",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.lifeinsurance",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.lilly",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.lincoln",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.loan",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.locker",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.luxe",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ly",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.madrid",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.man",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.mango",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.marshalls",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.mattel",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.melbourne",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.men",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.menu",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.merckmsd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.mg",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.miami",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.mint",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ml",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.mlb",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.mma",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.moe",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.monash",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.moto",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ms",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.msd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.museum",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nba",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.net.ng",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.netbank",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.netflix",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.neustar",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nfl",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nike",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.norton",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nrw",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ntt",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.nyc",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.olayan",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.olayangroup",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.one",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.open",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.or.kr",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.osaka",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ovh",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.paris",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.party",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.pfizer",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.pg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.philips",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.photo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.physio",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.ping",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.pm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.politie",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.porn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.praxi",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.pru",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.prudential",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.quebec",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.racing",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.re",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.review",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.rodeo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.rugby",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sakura",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.samsclub",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sandvik",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sandvikcoromant",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sap",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sas",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.scb",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.schaeffler",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.schmidt",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.science",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.scot",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.sd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.seat",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.seek",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.select",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.seven",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sex",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sn",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sncf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sport",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.ss",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.staples",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.statefarm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.stream",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.study",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sucks",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.surf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.swiss",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.sydney",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tab",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.taipei",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.target",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tattoo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tdk",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tel",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.teva",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tjmaxx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tjx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tkmaxx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.total",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.trade",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tube",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.tv",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.versicherung",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.vi",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.vip",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.vivo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.vlaanderen",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.vodka",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.voting",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.walmart",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.walter",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.weather",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.weatherchannel",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.webcam",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.wedding",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.wf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.whoswho",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.wiki",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.williamhill",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.win",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.winners",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.woodside",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.work",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.wtc",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xerox",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--80aqecdr1a",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--80asehdb",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.xn--80aswg",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.nic.xn--g2xx48c",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--kcrx77d1x4a",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--mgba3a3ejt",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--mgba7c0bbn0a",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--mgbab2bd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--mgbca7dzdo",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--mgbi4ecexp",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--ngbc5azd",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--ngbrx",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--p1acf",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xn--tiq49xqyj",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.xxx",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.yandex",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.yoga",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.yt",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nic.zm",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nixiregistry.in",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.nominet.uk",
+   "tlds": 81,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.norid.no",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.pandi.id",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.publicinterestregistry.org",
+   "tlds": 11,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.radix.host",
+   "tlds": 11,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.register.si",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.registro.br",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.bar",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.click",
+   "tlds": 16,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.cloud",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.coop",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.ec",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.gift",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.gy",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.hiphop",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.kfh",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registry.love",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.registryservices.music",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.ricta.org.rw",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.ryce-rsp.com",
+   "tlds": 4,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.sgnic.sg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.sidn.nl",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.ta.sgnic.sg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.teleinfo.cn",
+   "tlds": 10,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.thains.co.th",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.tonicregistry.to",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.twnic.tw",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.tznic.or.tz",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.uniregistry.net",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.verisign.com",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.y.net.ye",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  },
+  {
+   "host": "rdap.zdnsgtld.com",
+   "tlds": 22,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "rdap.zh.sgnic.sg",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "restwhois.ngtld.cn",
+   "tlds": 2,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "tld-rdap.verisign.com",
+   "tlds": 16,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "whois.kyregistry.ky",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "whois.nic.mtr",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "whois.nic.tatar",
+   "tlds": 1,
+   "http": "readable",
+   "file": "blocked"
+  },
+  {
+   "host": "whois.nic.xn--d1acj3b",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "whois.sr",
+   "tlds": 1,
+   "http": "readable",
+   "file": "readable"
+  },
+  {
+   "host": "www.rdap.fj",
+   "tlds": 1,
+   "http": "blocked",
+   "file": "blocked"
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+  "Status": 0,
+  "TC": false,
+  "RD": true,
+  "RA": true,
+  "AD": true,
+  "CD": false,
+  "Question": [
+    {
+      "name": "pphosted.com.",
+      "type": 15
+    }
+  ],
+  "Answer": [
+    {
+      "name": "pphosted.com.",
+      "type": 15,
+      "TTL": 1800,
+      "data": "15 mx2.proofpoint.com.gslb.pphosted.com."
+    },
+    {
+      "name": "pphosted.com.",
+      "type": 15,
+      "TTL": 1800,
+      "data": "10 mx1.proofpoint.com.gslb.pphosted.com."
+    }
+  ],
+  "Comment": "Response from 2610:a1:1014::87."
+}

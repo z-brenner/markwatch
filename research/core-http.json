@@ -1,0 +1,407 @@
+{
+ "mode": "http",
+ "pageUrl": "http://localhost:46209/",
+ "secure": {
+  "isSecureContext": true,
+  "origin": "http://localhost:46209",
+  "subtle": true
+ },
+ "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36",
+ "results": [
+  {
+   "id": "cloudflare-doh-json",
+   "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=NS",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://cloudflare-dns.com/dns-query?name=example.com&type=NS",
+   "ms": 391,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "cloudflare-doh-json-ctparam",
+   "url": "https://cloudflare-dns.com/dns-query?name=example.com&type=MX&ct=application/dns-json",
+   "js": "readable",
+   "status": 400,
+   "finalUrl": "https://cloudflare-dns.com/dns-query?name=example.com&type=MX&ct=application/dns-json",
+   "ms": 417,
+   "net": [
+    {
+     "status": 400,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "google-doh-json",
+   "url": "https://dns.google/resolve?name=example.com&type=NS",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://dns.google/resolve?name=example.com&type=NS",
+   "ms": 452,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "google-doh-nxdomain",
+   "url": "https://dns.google/resolve?name=this-should-not-exist-mw-8f3k2.com&type=NS",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://dns.google/resolve?name=this-should-not-exist-mw-8f3k2.com&type=NS",
+   "ms": 500,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "cloudflare-doh-txt-abusix",
+   "url": "https://cloudflare-dns.com/dns-query?name=34.216.184.93.abuse-contacts.abusix.zone&type=TXT",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://cloudflare-dns.com/dns-query?name=34.216.184.93.abuse-contacts.abusix.zone&type=TXT",
+   "ms": 505,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "google-doh-txt-abusix",
+   "url": "https://dns.google/resolve?name=34.216.184.93.abuse-contacts.abusix.zone&type=TXT",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://dns.google/resolve?name=34.216.184.93.abuse-contacts.abusix.zone&type=TXT",
+   "ms": 540,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "iana-bootstrap-dns",
+   "url": "https://data.iana.org/rdap/dns.json",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://data.iana.org/rdap/dns.json",
+   "ms": 561,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-verisign-com",
+   "url": "https://rdap.verisign.com/com/v1/domain/example.com",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.verisign.com/com/v1/domain/example.com",
+   "ms": 209,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    },
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-verisign-net",
+   "url": "https://rdap.verisign.com/net/v1/domain/example.net",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.verisign.com/net/v1/domain/example.net",
+   "ms": 208,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "iana-bootstrap-ipv6",
+   "url": "https://data.iana.org/rdap/ipv6.json",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://data.iana.org/rdap/ipv6.json",
+   "ms": 666,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "iana-bootstrap-ipv4",
+   "url": "https://data.iana.org/rdap/ipv4.json",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://data.iana.org/rdap/ipv4.json",
+   "ms": 782,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-arin-ip",
+   "url": "https://rdap.arin.net/registry/ip/8.8.8.8",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.arin.net/registry/ip/8.8.8.8",
+   "ms": 279,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-org-redirector",
+   "url": "https://rdap.org/domain/example.com",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.verisign.com/com/v1/domain/example.com",
+   "ms": 586,
+   "net": [
+    {
+     "status": 302,
+     "acao": "*",
+     "location": "https://rdap.verisign.com/com/v1/domain/example.com"
+    }
+   ]
+  },
+  {
+   "id": "rdap-pir-org",
+   "url": "https://rdap.publicinterestregistry.org/rdap/domain/wikipedia.org",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.publicinterestregistry.org/rdap/domain/wikipedia.org",
+   "ms": 643,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-arin-ipv6",
+   "url": "https://rdap.arin.net/registry/ip/2606:4700:4700::1111",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.arin.net/registry/ip/2606:4700:4700::1111",
+   "ms": 334,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-ripe-ip",
+   "url": "https://rdap.db.ripe.net/ip/193.0.6.139",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.db.ripe.net/ip/193.0.6.139",
+   "ms": 632,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    },
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-godaddy-registrar",
+   "url": "https://rdap.godaddy.com/v1/domain/godaddy.com",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.godaddy.com/v1/domain/godaddy.com",
+   "ms": 439,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "example-com-live",
+   "url": "https://example.com/",
+   "js": "blocked",
+   "error": "TypeError: Failed to fetch",
+   "ms": 200,
+   "net": [
+    {
+     "failed": "net::ERR_FAILED"
+    }
+   ]
+  },
+  {
+   "id": "rdap-apnic-ip",
+   "url": "https://rdap.apnic.net/ip/1.1.1.1",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.apnic.net/ip/1.1.1.1",
+   "ms": 798,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-namecheap-registrar",
+   "url": "https://rdap.namecheap.com/domain/namecheap.com",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.namecheap.com/domain/namecheap.com",
+   "ms": 392,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-afrinic-ip",
+   "url": "https://rdap.afrinic.net/rdap/ip/196.216.2.1",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.afrinic.net/rdap/ip/196.216.2.1",
+   "ms": 974,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-arin-ip-nonarin",
+   "url": "https://rdap.arin.net/registry/ip/193.0.6.139",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.db.ripe.net/ip/193.0.6.139",
+   "ms": 1217,
+   "net": [
+    {
+     "status": 303,
+     "acao": "*",
+     "location": "https://rdap.db.ripe.net/ip/193.0.6.139"
+    }
+   ]
+  },
+  {
+   "id": "rdap-markmonitor-registrar",
+   "url": "https://rdap.markmonitor.com/rdap/domain/google.com",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.markmonitor.com/rdap/domain/google.com",
+   "ms": 708,
+   "net": [
+    {
+     "status": 200,
+     "acao": "*",
+     "location": null
+    }
+   ]
+  },
+  {
+   "id": "rdap-lacnic-ip",
+   "url": "https://rdap.lacnic.net/rdap/ip/200.160.2.3",
+   "js": "readable",
+   "status": 200,
+   "finalUrl": "https://rdap.registro.br/ip/200.160.2.3",
+   "ms": 2010,
+   "net": [
+    {
+     "status": 307,
+     "acao": "*",
+     "location": "https://rdap.registro.br/ip/200.160.2.3"
+    }
+   ]
+  },
+  {
+   "id": "cloudflare-1.1.1.1",
+   "url": "https://1.1.1.1/dns-query?name=example.com&type=A",
+   "js": "blocked",
+   "error": "TypeError: Failed to fetch",
+   "ms": 14459,
+   "net": [
+    {
+     "failed": "net::ERR_CONNECTION_RESET"
+    }
+   ]
+  },
+  {
+   "id": "crtsh-json",
+   "url": "https://crt.sh/?q=%25.example.com&output=json",
+   "js": "timeout",
+   "error": "AbortError: signal is aborted without reason",
+   "ms": 20001,
+   "net": null
+  },
+  {
+   "id": "crtsh-json-substring",
+   "url": "https://crt.sh/?q=%25markwatchprobe%25&output=json",
+   "js": "timeout",
+   "error": "AbortError: signal is aborted without reason",
+   "ms": 20001,
+   "net": null
+  }
+ ]
+}
