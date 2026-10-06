@@ -249,8 +249,30 @@ export interface ProviderMatch {
   trademarkComplaintUrl?: string;
 }
 
+/**
+ * Whether a fact could be read. "unavailable" means the lookup was blocked or
+ * failed: the corresponding list is empty because we do not know, not because
+ * there is nothing. UI and scoring must not treat it as "none".
+ */
+export type CheckState = 'answered' | 'unavailable' | 'not_checked';
+
+export interface FactChecks {
+  ns: CheckState;
+  a: CheckState;
+  aaaa: CheckState;
+  mx: CheckState;
+  txt: CheckState;
+  rdap: CheckState;
+  /** All IPs have a readable network record. */
+  networks: CheckState;
+  /** Certificates were attached from a CT search. CT is searched by mark, not per domain. */
+  ct: CheckState;
+}
+
 export interface DomainFacts {
   verdict: RegistrationVerdict;
+  /** Absent only in hand-built fixtures; buildFacts always sets it. */
+  checks?: FactChecks;
   verdictReason: string;
   ns: string[];
   a: string[];
@@ -413,6 +435,7 @@ export type AuditType =
   | 'evidence.added'
   | 'evidence.removed'
   | 'template.imported'
+  | 'template.removed'
   | 'draft.created'
   | 'draft.field_dismissed'
   | 'draft.exported';

@@ -57,8 +57,11 @@ export function Field({ label, hint, children }: { label: string; hint?: ReactNo
 }
 
 const inputCls = 'w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none';
-export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={cx(inputCls, p.className)} />;
-export const TextArea = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...p} className={cx(inputCls, 'font-mono', p.className)} />;
+// autoComplete/spellCheck off: the browser must not keep case data in autofill or send it to a spellcheck service.
+export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => <input autoComplete="off" spellCheck={false} {...p} className={cx(inputCls, p.className)} />;
+export const TextArea = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea autoComplete="off" spellCheck={false} {...p} className={cx(inputCls, 'font-mono', p.className)} />
+);
 export const Select = (p: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={cx(inputCls, p.className)} />;
 
 export function Checkbox({ label, checked, onChange, disabled }: { label: ReactNode; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {

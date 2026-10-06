@@ -178,7 +178,10 @@ test.describe('Markwatch end to end (network mocked)', () => {
     await expect(page.getByRole('alert').filter({ hasText: 'Possible fair use or criticism' })).toBeVisible();
     const locked = page.getByRole('button', { name: /🔒 Letter to the registrant/ });
     await expect(locked).toBeDisabled();
-    await page.getByLabel('Counsel has reviewed this domain and approved proceeding with outreach.').check();
+    await expect(page.getByRole('button', { name: 'Record acknowledgment' })).toBeDisabled();
+    await page.getByLabel('Acknowledged by').fill('Jordan Counsel');
+    await page.getByRole('button', { name: 'Record acknowledgment' }).click();
+    await expect(page.getByText(/confirmed by Jordan Counsel/)).toBeVisible();
     await expect(page.getByRole('button', { name: /^Draft: Letter to the registrant/ })).toBeEnabled();
 
     await page.getByRole('button', { name: '3. Triage' }).click();
@@ -227,7 +230,7 @@ test.describe('Markwatch end to end (network mocked)', () => {
 
     await page.getByRole('button', { name: 'Case file & audit log' }).click();
     await page.getByLabel('Import case file').setInputFiles(path.resolve(zipPath));
-    await expect(page.getByText('Audit log hash chain verified.')).toBeVisible();
+    await expect(page.getByText(/Audit log hash chain verified: the log is internally consistent/)).toBeVisible();
     await expect(page.getByText(`${domainCount} domains in case`)).toBeVisible();
     await openDomain(page, 'acme-login.com', 'registered');
     await expect(page.getByText('Recommended route: Report to the registrar and the host now')).toBeVisible();

@@ -144,6 +144,10 @@ export class BrowserCollector implements Collector {
     const base = { kind: 'abuse' as const, query: ip, source: `Abusix Contact DB via ${r.source}`, at: r.at, ...(r.url ? { url: r.url } : {}) };
     if (r.status === 'blocked') return { ...base, status: 'blocked', reason: r.reason, detail: r.detail, ...(r.manualUrl ? { manualUrl: r.manualUrl } : {}) };
     if (r.status === 'not_found') return { ...base, status: 'not_found', evidence: r.evidence };
+    // Only a readable "no such record" means "no contact"; SERVFAIL/REFUSED is a failed lookup.
+    if (r.data.rcode !== 0 && r.data.rcode !== 3) {
+      return { ...base, status: 'blocked', reason: 'http_error', detail: `The resolver could not answer the Abusix query (DNS rcode ${r.data.rcode}).`, ...(r.url ? { manualUrl: r.url } : {}) };
+    }
     const emails = parseAbusixTxt(r.data);
     if (r.data.rcode === 3 || emails.length === 0) {
       return { ...base, status: 'not_found', evidence: 'The Abusix Contact DB has no abuse contact for this address.' };

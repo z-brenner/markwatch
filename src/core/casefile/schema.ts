@@ -114,6 +114,7 @@ export const AUDIT_TYPES = [
   'evidence.added',
   'evidence.removed',
   'template.imported',
+  'template.removed',
   'draft.created',
   'draft.field_dismissed',
   'draft.exported',
@@ -276,8 +277,12 @@ export const lookupResultSchema = lookupResultShape.superRefine((l, ctx) => {
   }
 });
 
+const checkState = z.enum(['answered', 'unavailable', 'not_checked']);
+const factChecks = z.strictObject({ ns: checkState, a: checkState, aaaa: checkState, mx: checkState, txt: checkState, rdap: checkState, networks: checkState, ct: checkState });
+
 const domainFacts = z.strictObject({
   verdict,
+  checks: factChecks.optional(),
   verdictReason: text,
   ns: list(short, 1_000),
   a: list(short, 1_000),

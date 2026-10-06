@@ -32,6 +32,8 @@ export interface ResolveOptions {
   concurrency?: number;
   /** Called for every lookup with every domain it applies to. */
   onLookup: (domains: string[], result: AnyLookup) => void;
+  /** Called when an existing answer is applied to more domains (no new query). Defaults to onLookup. */
+  onReuse?: (domains: string[], result: AnyLookup) => void;
   onProgress?: (p: ResolveProgress) => void;
 }
 
@@ -65,25 +67,38 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
     for (const d of domains) local.get(d)?.push(res);
     o.onLookup(domains, res);
   };
+  const reuse = (domains: string[], res: AnyLookup) => {
+    for (const d of domains) local.get(d)?.push(res);
+    (o.onReuse ?? o.onLookup)(domains, res);
+  };
   const latestFor = (domain: string, pred: (l: AnyLookup) => boolean) => latest(local.get(domain) ?? [], pred);
 
+  /**
+   * For a lookup shared by several domains (same registrable, same IP): which
+   * domains still need it, and an already-settled answer to hand them instead
+   * of querying again. Returns null when every sharer is settled.
+   */
+  const plan = (domains: string[], pred: (l: AnyLookup) => boolean): { lacking: string[]; existing?: AnyLookup } | null => {
+    const lacking = domains.filter((d) => !settled(latestFor(d, pred), retry));
+    if (!lacking.length) return null;
+    const holder = domains.find((d) => settled(latestFor(d, pred), retry));
+    const existing = holder ? latestFor(holder, pred) : undefined;
+    return existing ? { lacking, existing } : { lacking };
+  };
+  type Task = () => Promise<void>;
+  const schedule = (tasks: Task[], domains: string[], pred: (l: AnyLookup) => boolean, run: () => Promise<AnyLookup>) => {
+    const p = plan(domains, pred);
+    if (!p) return;
+    if (p.existing) reuse(p.lacking, p.existing);
+    else tasks.push(async () => emit(p.lacking, await run()));
+  };
+
   // ── Phase 1: NS at the registrable domain ──
-  const regs = [...byRegistrable.keys()].filter((reg) => {
-    const first = byRegistrable.get(reg)![0]!;
-    return !settled(latestFor(first.domain, (l) => l.kind === 'dns' && l.query === dnsQuery(reg, 'NS')), retry);
-  });
-  let done = 0;
-  o.onProgress?.({ phase: 'ns', done, total: regs.length });
-  await pool(
-    regs,
-    conc,
-    async (reg) => {
-      const res = await collector.dns(reg, 'NS', callOpts);
-      emit(byRegistrable.get(reg)!.map((r) => r.domain), res);
-      o.onProgress?.({ phase: 'ns', done: ++done, total: regs.length });
-    },
-    o.signal,
-  );
+  const nsTasks: Task[] = [];
+  for (const [reg, recs] of byRegistrable) {
+    schedule(nsTasks, recs.map((r) => r.domain), (l) => l.kind === 'dns' && l.query === dnsQuery(reg, 'NS'), () => collector.dns(reg, 'NS', callOpts));
+  }
+  await runTasks('ns', nsTasks, conc, o);
   if (o.signal?.aborted) return;
 
   // ── Phase 2: enrich registered domains ──
@@ -93,36 +108,27 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
     return decideVerdict({ ...(ns ? { ns } : {}), ...(rdap ? { rdap } : {}) }).verdict;
   };
   const registered = active.filter((r) => worthEnriching(verdictOf(r)));
-  type Task = () => Promise<void>;
-  const tasks: Task[] = [];
+  const dnsTasks: Task[] = [];
+  const rdapTasks: Task[] = [];
   const seenReg = new Set<string>();
   for (const r of registered) {
     for (const type of ['A', 'AAAA', 'MX', 'TXT'] as RRType[]) {
-      if (!settled(latestFor(r.domain, (l) => l.kind === 'dns' && l.query === dnsQuery(r.domain, type)), retry)) {
-        tasks.push(async () => emit([r.domain], await collector.dns(r.domain, type, callOpts)));
-      }
+      schedule(dnsTasks, [r.domain], (l) => l.kind === 'dns' && l.query === dnsQuery(r.domain, type), () => collector.dns(r.domain, type, callOpts));
     }
     if (seenReg.has(r.registrable)) continue;
     seenReg.add(r.registrable);
     const sharers = byRegistrable.get(r.registrable)!.map((x) => x.domain);
-    if (!latestFor(r.domain, (l) => l.kind === 'dns' && l.query.startsWith(WILDCARD_PREFIX) && l.query.endsWith(`.${r.registrable} A`))) {
-      tasks.push(async () => emit(sharers, await collector.dns(wildcardProbeName(r.registrable), 'A', callOpts)));
-    }
-    if (!settled(latestFor(r.domain, (l) => l.kind === 'rdap-domain' && l.query === r.registrable), retry)) {
-      tasks.push(async () => emit(sharers, await collector.rdapDomain(r.registrable, callOpts)));
-    }
+    schedule(
+      dnsTasks,
+      sharers,
+      (l) => l.kind === 'dns' && l.query.startsWith(WILDCARD_PREFIX) && l.query.endsWith(`.${r.registrable} A`),
+      () => collector.dns(wildcardProbeName(r.registrable), 'A', callOpts),
+    );
+    schedule(rdapTasks, sharers, (l) => l.kind === 'rdap-domain' && l.query === r.registrable, () => collector.rdapDomain(r.registrable, callOpts));
   }
-  done = 0;
-  o.onProgress?.({ phase: 'enrich', done, total: tasks.length });
-  await pool(
-    tasks,
-    conc,
-    async (t) => {
-      await t();
-      o.onProgress?.({ phase: 'enrich', done: ++done, total: tasks.length });
-    },
-    o.signal,
-  );
+  // Separate pools: RDAP is rate-limited per registry (2 concurrent, with
+  // cooldowns), and must not hold the DNS workers hostage.
+  await Promise.all([runTasks('enrich', dnsTasks, conc, o), runTasks('enrich', rdapTasks, 2, o, false)]);
   if (o.signal?.aborted) return;
 
   // ── Phase 3: networks for each unique IP ──
@@ -138,22 +144,22 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
   }
   const ipTasks: Task[] = [];
   for (const [ip, domains] of ipDomains) {
-    const first = domains[0]!;
-    if (!settled(latestFor(first, (l) => l.kind === 'rdap-ip' && l.query === ip), retry)) {
-      ipTasks.push(async () => emit(domains, await collector.rdapIp(ip, callOpts)));
-    }
-    if (o.useAbusix && !settled(latestFor(first, (l) => l.kind === 'abuse' && l.query === ip), retry)) {
-      ipTasks.push(async () => emit(domains, await collector.abuseContact(ip, callOpts)));
-    }
+    schedule(ipTasks, domains, (l) => l.kind === 'rdap-ip' && l.query === ip, () => collector.rdapIp(ip, callOpts));
+    if (o.useAbusix) schedule(ipTasks, domains, (l) => l.kind === 'abuse' && l.query === ip, () => collector.abuseContact(ip, callOpts));
   }
-  done = 0;
-  o.onProgress?.({ phase: 'network', done, total: ipTasks.length });
+  await runTasks('network', ipTasks, conc, o);
+}
+
+async function runTasks(phase: ResolveProgress['phase'], tasks: (() => Promise<void>)[], n: number, o: ResolveOptions, report = true): Promise<void> {
+  let done = 0;
+  if (report) o.onProgress?.({ phase, done, total: tasks.length });
   await pool(
-    ipTasks,
-    conc,
+    tasks,
+    n,
     async (t) => {
       await t();
-      o.onProgress?.({ phase: 'network', done: ++done, total: ipTasks.length });
+      done++;
+      if (report) o.onProgress?.({ phase, done, total: tasks.length });
     },
     o.signal,
   );
@@ -165,15 +171,21 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
  * only a readable RDAP 404 proves availability. RDAP terms forbid bulk
  * querying, so this runs only for the top-N candidates the caller picks.
  */
-export async function verifyWithRdap(records: readonly DomainRecord[], collector: Collector, o: Pick<ResolveOptions, 'signal' | 'onLookup' | 'onProgress'>): Promise<void> {
+export async function verifyWithRdap(
+  records: readonly DomainRecord[],
+  collector: Collector,
+  o: Pick<ResolveOptions, 'signal' | 'onLookup' | 'onProgress'> & { allRecords?: readonly DomainRecord[] },
+): Promise<void> {
   const regs = [...new Map(records.map((r) => [r.registrable, r])).values()];
+  const everyone = o.allRecords ?? records;
   let done = 0;
   o.onProgress?.({ phase: 'verify', done, total: regs.length });
   for (const r of regs) {
     if (o.signal?.aborted) return;
     const res = await collector.rdapDomain(r.registrable, o.signal ? { signal: o.signal } : {});
+    // Every domain on this registrable gets the answer, not only the selected ones.
     o.onLookup(
-      records.filter((x) => x.registrable === r.registrable).map((x) => x.domain),
+      everyone.filter((x) => x.registrable === r.registrable && !x.inventory).map((x) => x.domain),
       res,
     );
     o.onProgress?.({ phase: 'verify', done: ++done, total: regs.length });

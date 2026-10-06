@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useCase, useServices } from '../context';
 import { Banner, Button, Input, Badge } from '../components/ui';
 import { buildDraftContext, buildEml, buildMailto, renderTemplate, BANNER } from '../../core/draft';
+import { prepareExport } from '../../core/draft/export';
 import { downloadBytes } from '../download';
 import type { DomainRecord, DraftRecord, Route } from '../../core/types';
 
@@ -34,6 +35,9 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
   const blocking = result.blocking || locked;
   const dismissedFields = draft.dismissed.map((d) => d.field);
 
+  // What actually leaves the app: internal notes removed.
+  const out = prepareExport(result.text);
+
   const setValue = (path: string, value: string) => store.updateDraft(rec.domain, draft.id, (d) => ({ ...d, values: { ...d.values, [path]: value } }));
 
   const exportEml = async () => {
@@ -44,21 +48,26 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
           return meta && bytes ? [{ name: meta.name, type: meta.type, data: bytes }] : [];
         })
       : [];
-    const eml = buildEml({ ...(state.sender.email ? { from: state.sender.email } : {}), to: result.to, subject: result.subject, body: result.text, date: new Date(), attachments });
+    const eml = buildEml({ ...(state.sender.email ? { from: state.sender.email } : {}), to: result.to, subject: result.subject, body: out.text, date: new Date(), attachments });
     downloadBytes(`${tpl.id}-${rec.domain}.eml`, eml, 'message/rfc822');
-    await store.recordDraftExport(rec.domain, draft.id, 'eml', result.text, tpl.id, dismissedFields);
+    await store.recordDraftExport(rec.domain, draft.id, 'eml', out.text, tpl.id, dismissedFields);
     setNotice('Downloaded .eml draft. Open it in your mail client; Outlook opens it as an unsent draft. Nothing was sent.');
   };
   const exportTxt = async () => {
-    downloadBytes(`${tpl.id}-${rec.domain}.txt`, result.text, 'text/plain;charset=utf-8');
-    await store.recordDraftExport(rec.domain, draft.id, 'txt', result.text, tpl.id, dismissedFields);
+    downloadBytes(`${tpl.id}-${rec.domain}.txt`, out.text, 'text/plain;charset=utf-8');
+    await store.recordDraftExport(rec.domain, draft.id, 'txt', out.text, tpl.id, dismissedFields);
   };
   const copy = async () => {
-    await navigator.clipboard.writeText(result.text);
-    await store.recordDraftExport(rec.domain, draft.id, 'copy', result.text, tpl.id, dismissedFields);
-    setNotice('Copied to the clipboard.');
+    try {
+      await navigator.clipboard.writeText(out.text);
+    } catch {
+      setNotice('The browser refused clipboard access. Use Download .txt instead.');
+      return;
+    }
+    await store.recordDraftExport(rec.domain, draft.id, 'copy', out.text, tpl.id, dismissedFields);
+    setNotice('Copied to the clipboard. Note: your system clipboard may keep a history.');
   };
-  const mailto = buildMailto({ to: result.to, subject: result.subject, body: result.text });
+  const mailto = buildMailto({ to: result.to, subject: result.subject, body: out.text });
 
   return (
     <div className="rounded border border-slate-300 bg-slate-50 p-3" data-testid="draft-editor">
@@ -117,9 +126,15 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
           <h4 className="text-xs font-semibold uppercase text-slate-500">Preview</h4>
           {result.to.length > 0 && <div className="text-xs">To: {result.to.join(', ')}</div>}
           {result.subject && <div className="text-xs">Subject: {result.subject}</div>}
-          <pre className="mt-1 max-h-[32rem] overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-white p-3 font-mono text-xs" data-testid="draft-preview">
-            {result.text}
-          </pre>
+          {locked ? (
+            <p className="mt-1 rounded border border-red-200 bg-red-50 p-3 text-xs text-red-900" data-testid="draft-preview-locked">
+              The text of this draft is hidden while the template is locked for this classification.
+            </p>
+          ) : (
+            <pre className="mt-1 max-h-[32rem] overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-white p-3 font-mono text-xs" data-testid="draft-preview">
+              {result.text}
+            </pre>
+          )}
           <p className="mt-1 text-xs text-slate-500">The first line is always “{BANNER}”. Edit by filling fields; the merged text cannot be edited directly, so gaps cannot hide.</p>
         </div>
       </div>
@@ -131,7 +146,7 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
           <a
             href={mailto.url}
             className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm"
-            onClick={() => void store.recordDraftExport(rec.domain, draft.id, 'mailto', result.text, tpl.id, dismissedFields)}
+            onClick={() => void store.recordDraftExport(rec.domain, draft.id, 'mailto', out.text, tpl.id, dismissedFields)}
           >
             Open in mail app (mailto)
           </a>
@@ -153,6 +168,12 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
         )}
       </div>
       {blocking && !locked && <p className="mt-2 text-xs text-red-700">Export is blocked until every unfilled field is filled or dismissed.</p>}
+      {!blocking && out.removedNotes > 0 && <p className="mt-2 text-xs text-slate-600">{out.removedNotes} internal drafting note(s) shown in the preview are removed from every export.</p>}
+      {!blocking && out.placeholders > 0 && (
+        <Banner level="caution">
+          {out.placeholders} placeholder legal passage(s) are still in this draft. Replace them with counsel-approved text (or import your own template) before sending.
+        </Banner>
+      )}
       {notice && <p className="mt-2 text-xs text-emerald-700">{notice}</p>}
     </div>
   );

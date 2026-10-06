@@ -107,22 +107,24 @@ export function runDiscovery({ state, ctEntries = [], manual = [] }: DiscoveryIn
     }
   }
 
-  // Inventory labels (recomputed for every record, since the inventory may have changed).
+  const records = labelInventory([...existing.values()], state);
+  const excludedByInventory = records.filter((r) => r.inventory).length;
+  return { records, permutation, added, excludedByInventory, invalidManual };
+}
+
+/**
+ * Recomputes the owned/authorized label of every record from the current
+ * inventory and primary domain. Must run whenever either changes: a stale
+ * label would let an authorized domain be offered legal threats.
+ */
+export function labelInventory(records: readonly DomainRecord[], state: Pick<CaseState, 'inventory' | 'subject'>): DomainRecord[] {
+  const primary = normalizeDomain(state.subject.primaryDomain);
   const primaryReg = primary ? registrableDomain(primary.ascii) : null;
-  let excludedByInventory = 0;
-  const records = [...existing.values()].map((r) => {
+  return records.map((r) => {
     const { inventory: _old, ...rest } = r;
     const hit = matchInventory(r.domain, state.inventory);
-    if (hit) {
-      excludedByInventory++;
-      return { ...rest, inventory: { kind: hit.kind, pattern: hit.pattern, ...(hit.party ? { party: hit.party } : {}) } };
-    }
-    if (primaryReg && r.registrable === primaryReg) {
-      excludedByInventory++;
-      return { ...rest, inventory: { kind: 'owned' as const, pattern: primaryReg, party: 'Primary domain' } };
-    }
+    if (hit) return { ...rest, inventory: { kind: hit.kind, pattern: hit.pattern, ...(hit.party ? { party: hit.party } : {}) } };
+    if (primaryReg && r.registrable === primaryReg) return { ...rest, inventory: { kind: 'owned' as const, pattern: primaryReg, party: 'Primary domain' } };
     return rest;
   });
-
-  return { records, permutation, added, excludedByInventory, invalidManual };
 }

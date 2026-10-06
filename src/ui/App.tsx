@@ -10,6 +10,7 @@ import { TemplatesPage } from './pages/TemplatesPage';
 import { CasePage } from './pages/CasePage';
 import { AboutPage } from './pages/AboutPage';
 import { cx } from './components/ui';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export type Page = 'setup' | 'discover' | 'triage' | 'templates' | 'case' | 'about';
 const NAV: { id: Page; label: string }[] = [
@@ -40,7 +41,9 @@ export function App() {
   if (!services) return <p className="p-6 font-sans text-sm">Loading…</p>;
   return (
     <ServicesContext.Provider value={services}>
-      <Shell />
+      <ErrorBoundary store={services.store}>
+        <Shell />
+      </ErrorBoundary>
     </ServicesContext.Provider>
   );
 }

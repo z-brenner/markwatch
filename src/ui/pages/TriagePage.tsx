@@ -16,6 +16,13 @@ export const VERDICT_LABEL: Record<RegistrationVerdict, { label: string; tone: '
 
 const PAGE = 200;
 
+/** True if the latest attempt of some lookup is still blocked (a later answer clears it). */
+export function hasOpenBlock(d: DomainRecord): boolean {
+  const latest = new Map<string, DomainRecord['lookups'][number]>();
+  for (const l of d.lookups) latest.set(`${l.kind}\u0000${l.query}`, l);
+  return [...latest.values()].some((l) => l.status === 'blocked' && l.reason !== 'unsupported' && l.reason !== 'cancelled');
+}
+
 type VerdictFilter = 'all' | 'registered' | 'needs_attention' | RegistrationVerdict;
 
 export function TriagePage({ nav }: { nav: Nav }) {
@@ -115,7 +122,7 @@ export function TriagePage({ nav }: { nav: Nav }) {
 function Row({ d, onOpen }: { d: DomainRecord; onOpen: () => void }) {
   const v = VERDICT_LABEL[d.facts?.verdict ?? 'unknown'];
   const host = d.facts?.providers.find((p) => p.role === 'cdn' || p.role === 'web')?.name ?? Object.values(d.facts?.networks ?? {})[0]?.org;
-  const blocked = d.lookups.some((l) => l.status === 'blocked' && l.reason !== 'unsupported');
+  const blocked = hasOpenBlock(d);
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
       <td className="py-2 pr-2 font-semibold tabular-nums" title={d.score?.items.map((i) => `${i.points > 0 ? '+' : ''}${i.points} ${i.reason}`).join('\n')}>

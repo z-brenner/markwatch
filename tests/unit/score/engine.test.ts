@@ -123,3 +123,12 @@ describe('scoring rules', () => {
     expect(new Set(RULES.map((r) => r.id)).size).toBe(RULES.length);
   });
 });
+
+describe('blocked lookups never count as "none"', () => {
+  const checks = (o: Partial<Record<string, string>>) => ({ ns: 'answered', a: 'answered', aaaa: 'answered', mx: 'answered', txt: 'answered', rdap: 'answered', networks: 'answered', ct: 'not_checked', ...o }) as never;
+  it('MX with a blocked A or AAAA lookup does not score "no website"', () => {
+    expect(scoreDomain(input({ facts: facts({ mx: ['mx.x'], checks: checks({ a: 'unavailable' }) }) })).items).toEqual([]);
+    expect(scoreDomain(input({ facts: facts({ mx: ['mx.x'], checks: checks({ aaaa: 'not_checked' }) }) })).items).toEqual([]);
+    expect(scoreDomain(input({ facts: facts({ mx: ['mx.x'], checks: checks({}) }) })).items.map((i) => i.ruleId)).toEqual(['mx-no-web']);
+  });
+});

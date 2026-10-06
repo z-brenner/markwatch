@@ -51,6 +51,11 @@ function keywordHits(domain: string, keywords: readonly string[]): string[] {
   return keywords.filter((k) => k && host.includes(k.toLowerCase()));
 }
 
+/** Facts built by buildFacts carry checks; hand-built facts without them are treated as answered. */
+function answered(f: DomainFacts, k: keyof NonNullable<DomainFacts['checks']>): boolean {
+  return !f.checks || f.checks[k] === 'answered';
+}
+
 function evaluate(c: Condition, input: ScoreInput): Hit | null {
   const f = input.facts;
   switch (c.kind) {
@@ -59,7 +64,8 @@ function evaluate(c: Condition, input: ScoreInput): Hit | null {
       return d !== undefined && d >= 0 && d <= c.days ? { vars: { days: String(d) } } : null;
     }
     case 'mxWithoutWeb':
-      return f && f.mx.length > 0 && f.a.length === 0 && f.aaaa.length === 0 ? { vars: {} } : null;
+      // "No website" needs readable A and AAAA answers: a blocked lookup is not "none".
+      return f && f.mx.length > 0 && f.a.length === 0 && f.aaaa.length === 0 && answered(f, 'a') && answered(f, 'aaaa') ? { vars: {} } : null;
     case 'mxWithWeb':
       return f && f.mx.length > 0 && (f.a.length > 0 || f.aaaa.length > 0) ? { vars: {} } : null;
     case 'parkingNameserver': {

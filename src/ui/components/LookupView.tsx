@@ -45,7 +45,12 @@ function summarize(r: LookupResult<unknown>): string {
     return ans.answers?.length ? ans.answers.map((a) => a.data).join(', ') : 'No records of this type';
   }
   if (r.kind === 'abuse' && Array.isArray(d)) return (d as string[]).join(', ');
-  if (r.kind === 'ct' && Array.isArray(d)) return `${d.length} certificate(s)`;
+  if (r.kind === 'ct' && Array.isArray(d)) {
+    if (d.length === 0 && r.query.includes('names containing')) {
+      return '0 certificates returned. crt.sh substring search often returns an empty list even when matches exist, so this is not proof that there are none.';
+    }
+    return `${d.length} certificate(s)`;
+  }
   if (r.kind === 'rdap-domain' && d && !Array.isArray(d)) {
     const x = d as unknown as RdapDomain;
     return [x.registrar?.name, x.registered && `registered ${x.registered.slice(0, 10)}`].filter(Boolean).join(' · ') || 'RDAP record';

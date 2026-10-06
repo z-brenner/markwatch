@@ -98,4 +98,34 @@ describe('resolve', () => {
     await resolve(first, c3, true);
     expect(c3.calls.sort()).toEqual(['dns acme.net NS', 'rdap acme-login.com'].sort());
   });
+
+  it('a domain added later that shares a registrable or IP gets the existing answers without new queries', async () => {
+    const first = await resolve(records(), new FakeCollector(zones));
+    const late: DomainRecord = { ...first.find((r) => r.domain === 'acmme.com')!, domain: 'login.acmme.com', unicode: 'login.acmme.com', lookups: [] };
+    const late2: DomainRecord = { ...late, domain: 'b-acme.com', unicode: 'b-acme.com', registrable: 'b-acme.com' };
+    const c = new FakeCollector({ ...zones, 'login.acmme.com': { a: ['192.0.2.1'] }, 'b-acme.com': { ns: ['ns1.x.example'], a: ['192.0.2.1'], rdap: 'ok' } });
+    const reused: string[] = [];
+    const applied = new Map([...first, late, late2].map((r) => [r.domain, { ...r, lookups: [...r.lookups] }]));
+    await resolveDomains([...applied.values()], c, {
+      useAbusix: true,
+      onLookup: (ds, res) => ds.forEach((d) => applied.get(d)!.lookups.push(res)),
+      onReuse: (ds, res) => ds.forEach((d) => (reused.push(`${d} ${res.kind} ${res.query}`), applied.get(d)!.lookups.push(res))),
+    });
+    // No second NS/RDAP query for acmme.com; its answers are re-applied to the new subdomain.
+    expect(c.calls.filter((x) => x === 'dns acmme.com NS' || x === 'rdap acmme.com')).toEqual([]);
+    expect(reused).toEqual(expect.arrayContaining(['login.acmme.com dns acmme.com NS', 'login.acmme.com rdap-domain acmme.com']));
+    // The shared IP is not re-queried, but b-acme.com gets its network record.
+    expect(c.calls).not.toContain('rdap-ip 192.0.2.1');
+    expect(buildFacts(applied.get('b-acme.com')!).networks['192.0.2.1']?.org).toBe('Fake Host');
+    expect(buildFacts(applied.get('login.acmme.com')!).verdict).toBe('registered');
+  });
+
+  it('blocked A lookups are reported as unavailable facts, not as "no website"', async () => {
+    const c = new FakeCollector({ 'acmme.com': { ns: ['ns1.x.example'], mx: ['mx.x.example'], rdap: 'ok' } });
+    const out = await resolve(records(), c);
+    const rec = out.find((r) => r.domain === 'acmme.com')!;
+    rec.lookups = rec.lookups.map((l) => (l.kind === 'dns' && l.query === 'acmme.com A' ? { status: 'blocked', kind: 'dns', query: l.query, source: 'x', at: l.at, reason: 'timeout', detail: 't' } : l));
+    const f = buildFacts(rec);
+    expect(f.checks).toMatchObject({ a: 'unavailable', aaaa: 'answered', mx: 'answered', ns: 'answered' });
+  });
 });

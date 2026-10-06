@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useCase, useServices } from '../context';
 import type { Nav } from '../App';
-import { Badge, Banner, Button, Card, Checkbox, Empty, ExternalLink, Input, Mono, Select } from '../components/ui';
+import { Badge, Banner, Button, Card, Empty, ExternalLink, Input, Mono, Select } from '../components/ui';
 import { LookupView } from '../components/LookupView';
 import { DraftEditor } from './DraftEditor';
 import { VERDICT_LABEL } from './TriagePage';
 import { routeFor, effectiveTemplates } from '../../core/route/route';
 import { readFileBytes } from '../download';
-import { CLASSIFICATION_LABELS, CLASSIFICATIONS, type Classification, type DomainRecord, type LookupResult, type Route } from '../../core/types';
+import { CLASSIFICATION_LABELS, CLASSIFICATIONS, type CheckState, type Classification, type DomainRecord, type LookupResult, type Route } from '../../core/types';
 
 export function DomainPage({ domain, nav }: { domain: string; nav: Nav }) {
   const { state } = useCase();
@@ -22,9 +22,18 @@ export function DomainPage({ domain, nav }: { domain: string; nav: Nav }) {
   return <DomainDetail rec={rec} nav={nav} />;
 }
 
+/** Earliest parseable date, compared as dates (entered formats vary), returned as YYYY-MM-DD. */
 function earliestRights(dates: (string | undefined)[]): string | undefined {
-  const valid = dates.filter((d): d is string => !!d && !Number.isNaN(Date.parse(d))).sort();
-  return valid[0];
+  const times = dates.map((d) => (d ? Date.parse(d) : NaN)).filter((t) => !Number.isNaN(t));
+  return times.length ? new Date(Math.min(...times)).toISOString().slice(0, 10) : undefined;
+}
+
+/** Renders a fact list honestly: "blocked / failed" and "not checked" are never shown as "none". */
+function FactValue({ state, values, none }: { state: CheckState | undefined; values: string[]; none: string }) {
+  if (values.length) return <>{values.join(', ')}</>;
+  if (state === 'unavailable') return <span className="text-amber-800">unknown: the lookup was blocked or failed (see Lookups)</span>;
+  if (state === 'not_checked') return <span className="text-slate-500">not checked</span>;
+  return <>{none}</>;
 }
 
 function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
@@ -100,13 +109,25 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
           {f ? (
             <dl className="grid grid-cols-[6rem_1fr] gap-x-2 gap-y-1 text-sm">
               <dt className="text-slate-500">NS</dt>
-              <dd>{f.ns.join(', ') || '—'}</dd>
-              <dt className="text-slate-500">A / AAAA</dt>
-              <dd>{[...f.a, ...f.aaaa].join(', ') || '— (no website records)'}</dd>
+              <dd>
+                <FactValue state={f.checks?.ns} values={f.ns} none="none" />
+              </dd>
+              <dt className="text-slate-500">A</dt>
+              <dd>
+                <FactValue state={f.checks?.a} values={f.a} none="none (no IPv4 website records)" />
+              </dd>
+              <dt className="text-slate-500">AAAA</dt>
+              <dd>
+                <FactValue state={f.checks?.aaaa} values={f.aaaa} none="none (no IPv6 website records)" />
+              </dd>
               <dt className="text-slate-500">MX</dt>
-              <dd>{f.mx.join(', ') || '—'}</dd>
+              <dd>
+                <FactValue state={f.checks?.mx} values={f.mx} none="none" />
+              </dd>
               <dt className="text-slate-500">TXT</dt>
-              <dd className="break-all text-xs">{f.txt.join(' | ') || '—'}</dd>
+              <dd className="break-all text-xs">
+                <FactValue state={f.checks?.txt} values={f.txt} none="none" />
+              </dd>
               <dt className="text-slate-500">Wildcard</dt>
               <dd>{f.wildcard === undefined ? 'not checked' : f.wildcard ? 'yes' : 'no'}</dd>
             </dl>
@@ -158,7 +179,9 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No hosting data.</p>
+            <p className="text-sm text-slate-500">
+              {f?.checks?.networks === 'unavailable' ? 'Unknown: the network lookups were blocked or failed (see Lookups).' : f && f.a.length + f.aaaa.length === 0 ? 'No IP addresses to look up.' : 'Not checked yet.'}
+            </p>
           )}
         </Card>
         <Card title={`Certificates (${f?.ct.length ?? 0})`}>
@@ -171,7 +194,9 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">None found, or not searched. Only domains containing the mark are searched in certificate logs.</p>
+            <p className="text-sm text-slate-500">
+              No certificates are attached to this domain. Certificate logs are searched by mark (on the Discover page), not per domain, so this is not proof that none exist. Check the CT search status there.
+            </p>
           )}
         </Card>
       </div>
@@ -179,7 +204,12 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
       <Evidence rec={rec} />
 
       <Card title={`Lookups (${rec.lookups.length})`}>
-        {rec.lookups.length ? [...rec.lookups].reverse().map((l, i) => <LookupView key={`${l.at}-${i}`} r={l} onManual={onManual} />) : <Empty>No lookups yet.</Empty>}
+        {rec.lookups.length ? (
+          // Keys are positions in the append-only list, so they stay stable as new lookups arrive.
+          rec.lookups.map((l, i) => <LookupView key={i} r={l} onManual={onManual} />).reverse()
+        ) : (
+          <Empty>No lookups yet.</Empty>
+        )}
       </Card>
     </>
   );
@@ -200,9 +230,9 @@ function Classifier({ rec }: { rec: DomainRecord }) {
           </option>
         ))}
       </Select>
-      <Input className="mt-2" placeholder="Note (why)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Classification note" />
+      <Input className="mt-2" placeholder={value === 'unrelated' ? 'Why is it unrelated? (required)' : 'Note (why)'} value={note} onChange={(e) => setNote(e.target.value)} aria-label="Classification note" />
       <div className="mt-2 flex gap-2">
-        <Button variant="primary" disabled={!value} onClick={() => value && store.classify(rec.domain, value, note.trim() || undefined)}>
+        <Button variant="primary" disabled={!value || (value === 'unrelated' && !note.trim())} onClick={() => value && store.classify(rec.domain, value, note.trim() || undefined)}>
           Save classification
         </Button>
         {rec.classification && <Button onClick={() => (store.clearClassification(rec.domain), setValue(''), setNote(''))}>Clear</Button>}
@@ -220,6 +250,7 @@ function RouteCard({ rec, route }: { rec: DomainRecord; route: Route }) {
   const { store } = useServices();
   const { templates } = useCase();
   const [openDraft, setOpenDraft] = useState<string | null>(null);
+  const [ackName, setAckName] = useState('');
   const allowed = effectiveTemplates(route, rec.acks);
   const acked = route.requiresAck && rec.acks.some((a) => a.id === route.requiresAck?.id);
   const tplTitle = (id: string) => templates.find((t) => t.id === id)?.title ?? id;
@@ -248,8 +279,28 @@ function RouteCard({ rec, route }: { rec: DomainRecord; route: Route }) {
       </ul>
       {route.requiresAck && (
         <div className="mt-3 rounded border border-amber-300 bg-amber-50 p-3">
-          <Checkbox label={route.requiresAck.text} checked={!!acked} disabled={!!acked} onChange={(c) => c && store.recordAck(rec.domain, route.requiresAck!.id, route.requiresAck!.text)} />
-          {!acked && <p className="mt-1 text-xs text-amber-900">Outbound templates stay locked until this is recorded. The acknowledgment goes in the audit log.</p>}
+          {acked ? (
+            <p className="text-sm">
+              ✓ Recorded: {rec.acks.find((a) => a.id === route.requiresAck?.id)?.text} ({rec.acks.find((a) => a.id === route.requiresAck?.id)?.at})
+            </p>
+          ) : (
+            <>
+              <p className="text-sm">{route.requiresAck.text}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Input
+                  className="max-w-xs"
+                  placeholder={route.requiresAck.id === 'counsel-consulted' ? 'Name of reviewing counsel' : 'Your name'}
+                  value={ackName}
+                  onChange={(e) => setAckName(e.target.value)}
+                  aria-label="Acknowledged by"
+                />
+                <Button disabled={!ackName.trim()} onClick={() => store.recordAck(rec.domain, route.requiresAck!.id, `${route.requiresAck!.text} — confirmed by ${ackName.trim()}`)}>
+                  Record acknowledgment
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-amber-900">Outbound templates stay locked until this is recorded. The acknowledgment and the name go in the audit log.</p>
+            </>
+          )}
         </div>
       )}
       <h3 className="mt-3 text-sm font-semibold">Steps</h3>
@@ -343,8 +394,11 @@ function Evidence({ rec }: { rec: DomainRecord }) {
             e.target.value = '';
             setBusy(true);
             void (async () => {
-              for (const fl of list) await store.addEvidence({ name: fl.name, type: fl.type, bytes: await readFileBytes(fl) }, [rec.domain]);
-              setBusy(false);
+              try {
+                for (const fl of list) await store.addEvidence({ name: fl.name, type: fl.type, bytes: await readFileBytes(fl) }, [rec.domain]);
+              } finally {
+                setBusy(false);
+              }
             })();
           }}
         />

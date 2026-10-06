@@ -46,3 +46,59 @@ describe('CaseStore', () => {
     expect(bad.ok).toBe(false);
   });
 });
+
+describe('CaseStore review regressions', () => {
+  const rec = (domain: string) => ({ domain, unicode: domain, registrable: domain, techniques: [], seeds: [], sources: ['manual' as const], lookups: [], acks: [], dismissedWarnings: [], drafts: [], evidence: [] });
+
+  it('relabels existing domains when the inventory changes (no stale "unlabelled" authorized domains)', async () => {
+    const store = await CaseStore.create();
+    store.updateSubject({ marks: ['Acme'], primaryDomain: 'acme.com', owner: 'Acme', rights: [] });
+    store.replaceDomains([rec('partner-acme.com'), rec('evil-acme.com')], {});
+    expect(store.state.domains[0]!.inventory).toBeUndefined();
+    store.setInventory([{ pattern: 'partner-acme.com', kind: 'authorized', party: 'Partner' }]);
+    expect(store.state.domains[0]!.inventory).toMatchObject({ kind: 'authorized', party: 'Partner' });
+    expect(store.state.domains[1]!.inventory).toBeUndefined();
+    store.setInventory([]);
+    expect(store.state.domains[0]!.inventory).toBeUndefined();
+  });
+
+  it('import: drops queued audit writes for the old case, recomputes facts, and drops acks missing from the audit log', async () => {
+    const a = await CaseStore.create();
+    a.updateSubject({ marks: ['Acme'], primaryDomain: 'acme.com', owner: 'Acme', rights: [] });
+    a.replaceDomains([rec('acme-x.com')], {});
+    a.recordAck('acme-x.com', 'counsel-consulted', 'ok — confirmed by Pat');
+    await a.flush();
+    const { bytes } = await a.exportCase();
+
+    // Hand-edit the case: add an acknowledgment that never went through the app.
+    const { unzipSync, zipSync, strFromU8, strToU8 } = await import('fflate');
+    const files = unzipSync(bytes);
+    const json = JSON.parse(strFromU8(files['case.json']!)) as { case: { domains: { acks: { id: string; at: string; text: string }[]; facts?: unknown }[] } };
+    json.case.domains[0]!.acks.push({ id: 'dmca-fair-use-considered', at: '2026-10-05T00:00:00.000Z', text: 'forged' });
+    files['case.json'] = strToU8(JSON.stringify(json));
+    delete files['manifest.json'];
+
+    const b = await CaseStore.create();
+    b.primaryNs = ['ns1.stale.example'];
+    void b.audit('system', 'settings.changed', { stale: true }); // queued for the old case
+    await b.importCase(zipSync(files));
+    await b.flush();
+    expect(b.primaryNs).toEqual([]);
+    expect(b.state.audit.some((e) => e.payload.stale === true)).toBe(false);
+    const acks = b.state.domains[0]!.acks.map((x) => x.id);
+    expect(acks).toEqual(['counsel-consulted']);
+    expect(b.getSnapshot().importWarnings.join(' ')).toMatch(/not in the audit log/);
+    expect(b.state.domains[0]!.score).toBeDefined();
+  });
+
+  it('a pasted WHOIS-derived RDAP record stays exportable', async () => {
+    const store = await CaseStore.create();
+    store.replaceDomains([rec('acme-x.com')], {});
+    store.recordLookup(
+      ['acme-x.com'],
+      { status: 'manual', kind: 'rdap-domain', query: 'acme-x.com', source: 'x (pasted by user)', at: '2026-10-05T00:00:00.000Z', pastedText: 'Registrar: X', data: { ldhName: 'acme-x.com', status: [], nameservers: [], redactedFields: [], server: 'manual (WHOIS text pasted by user)', registrar: { name: 'X', abuseEmail: ['abuse@x.example'], abuseTel: [] } } },
+      'user',
+    );
+    await expect(store.exportCase()).resolves.toBeDefined();
+  });
+});

@@ -5,6 +5,7 @@ import { Badge, Banner, Button, Card, Empty, Progress, TextArea } from '../compo
 import { LookupView } from '../components/LookupView';
 import { parseDomainList } from '../../pipeline/deps';
 import { CT_MIN_TERM } from '../../state/runner';
+import { hasOpenBlock } from './TriagePage';
 import type { CtEntry, LookupResult } from '../../core/types';
 
 const PHASE_LABEL = { ns: 'Checking registration (NS)', enrich: 'Enriching registered domains (DNS + RDAP)', network: 'Looking up networks and abuse contacts', verify: 'Verifying with registry RDAP' } as const;
@@ -19,7 +20,7 @@ export function DiscoverPage({ nav }: { nav: Nav }) {
   const configured = !!state.subject.primaryDomain && state.subject.marks.length > 0;
   const stats = useMemo(() => {
     const active = state.domains.filter((d) => !d.inventory);
-    const blocked = active.filter((d) => d.lookups.some((l, i, all) => l.status === 'blocked' && l.reason !== 'unsupported' && !all.slice(i + 1).some((m) => m.kind === l.kind && m.query === l.query))).length;
+    const blocked = active.filter(hasOpenBlock).length;
     const unresolved = active.filter((d) => !d.lookups.some((l) => l.kind === 'dns')).length;
     const notDelegated = active.filter((d) => d.facts?.verdict === 'not_delegated').length;
     return { total: state.domains.length, active: active.length, excluded: state.domains.length - active.length, blocked, unresolved, notDelegated };

@@ -48,7 +48,7 @@ export function SetupPage({ nav }: { nav: Nav }) {
     }
     if (ownedParsed.invalid.length) errs.push(`Not valid domains (owned): ${ownedParsed.invalid.join(', ')}`);
     if (badAuth.length) errs.push(`Not valid domains (authorized): ${badAuth.join(', ')}`);
-    if (!Number.isInteger(settings.cap) || settings.cap < 1 || settings.cap > 50_000) errs.push('The candidate cap must be between 1 and 50,000.');
+    if (!Number.isInteger(settings.cap) || settings.cap < 1 || settings.cap > 20_000) errs.push('The candidate cap must be between 1 and 20,000.');
     setErrors(errs);
     if (errs.length) return;
     store.updateSubject({ marks: markList, owner: owner.trim(), primaryDomain: p!.ascii, rights: rights.filter((r) => r.number.trim() || r.jurisdiction.trim()) });
@@ -121,7 +121,7 @@ export function SetupPage({ nav }: { nav: Nav }) {
       <Card title="Discovery settings">
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Candidate cap" hint="Default 5,000. You will see the count before anything is resolved.">
-            <Input type="number" min={1} max={50000} value={settings.cap} onChange={(e) => setSettings({ ...settings, cap: Number(e.target.value) })} aria-label="Candidate cap" />
+            <Input type="number" min={1} max={20000} value={settings.cap} onChange={(e) => setSettings({ ...settings, cap: Number(e.target.value) })} aria-label="Candidate cap" />
           </Field>
           <Field label="DNS resolver" hint="The other is used only if the first fails.">
             <Select value={settings.primaryResolver} onChange={(e) => setSettings({ ...settings, primaryResolver: e.target.value as 'cloudflare' | 'google' })} aria-label="Resolver">

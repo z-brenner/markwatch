@@ -9,6 +9,7 @@ import { appendAudit, exportCaseZip, importCaseZip, newCaseState } from '../core
 import { rulesetFingerprint, scoreDomain } from '../core/score/engine';
 import { RULESET_VERSION } from '../config/scoring.rules';
 import { buildFacts } from '../pipeline/facts';
+import { labelInventory } from '../pipeline/discovery';
 import { nowUtc, sha256Hex } from '../core/util';
 import { DEFAULT_DICTIONARY, RISKY_KEYWORDS } from '../config/keywords';
 import { DEFAULT_TLDS } from '../config/tlds';
@@ -71,6 +72,12 @@ export class CaseStore {
   private builtins = builtinTemplates();
   /** Primary-domain NS, used by the "same nameservers" scoring rule. */
   primaryNs: string[] = [];
+  /**
+   * Incremented when a different case is loaded. Audit jobs and lookups that
+   * started under an older generation are dropped instead of being written
+   * into the new case.
+   */
+  generation = 0;
 
   /** Forget the primary NS (e.g. after the primary domain changes) so the next run re-resolves it. */
   resetPrimaryNs(): void {
@@ -132,8 +139,11 @@ export class CaseStore {
 
   /** Appends an audit entry. Serialized; resolves once the entry is in state. */
   audit(actor: 'user' | 'system', type: AuditType, payload: Record<string, unknown>): Promise<void> {
+    const gen = this.generation;
     const job = this.auditQueue.then(async () => {
+      if (gen !== this.generation) return;
       const log: AuditEntry[] = await appendAudit(this.snap.state.audit, { actor, type, payload });
+      if (gen !== this.generation) return;
       this.set({ ...this.snap.state, audit: log }, {}, true, true);
     });
     this.auditQueue = job.catch(() => undefined);
@@ -147,7 +157,9 @@ export class CaseStore {
 
   // ── subject, sender, inventory, settings ──
   updateSubject(subject: CaseSubject): void {
-    this.set({ ...this.state, subject });
+    if (subject.primaryDomain !== this.state.subject.primaryDomain) this.resetPrimaryNs();
+    const next = { ...this.state, subject };
+    this.set({ ...next, domains: labelInventory(next.domains, next).map((d) => this.rescore(d, next)) });
     void this.audit('user', 'settings.changed', { field: 'subject', marks: subject.marks, primaryDomain: subject.primaryDomain, owner: subject.owner, rights: subject.rights.length });
   }
 
@@ -156,7 +168,9 @@ export class CaseStore {
   }
 
   setInventory(inventory: InventoryEntry[]): void {
-    this.set({ ...this.state, inventory });
+    // Relabel every domain now: a stale label could expose an authorized party to legal threats.
+    const next = { ...this.state, inventory };
+    this.set({ ...next, domains: labelInventory(next.domains, next) });
     void this.audit('user', 'inventory.changed', {
       owned: inventory.filter((i) => i.kind === 'owned').length,
       authorized: inventory.filter((i) => i.kind === 'authorized').length,
@@ -172,6 +186,17 @@ export class CaseStore {
   replaceDomains(domains: DomainRecord[], summary: Record<string, unknown>): void {
     this.set({ ...this.state, domains: domains.map((d) => this.rescore(d)) });
     void this.audit('system', 'discovery.run', summary);
+  }
+
+  /** Applies an answer already in the case to more domains (no new query, so no audit entry). */
+  applyExistingLookup(domains: string[], result: LookupResult<unknown>): void {
+    const set = new Set(domains);
+    this.set(
+      { ...this.state, domains: this.state.domains.map((d) => (set.has(d.domain) && !d.lookups.includes(result) ? this.rescore({ ...d, lookups: [...d.lookups, result] }) : d)) },
+      {},
+      true,
+      true,
+    );
   }
 
   /** Applies a lookup result to the given domains and logs it once. */
@@ -197,15 +222,15 @@ export class CaseStore {
     });
   }
 
-  private rescore(d: DomainRecord): DomainRecord {
+  private rescore(d: DomainRecord, state: CaseState = this.state): DomainRecord {
     const facts = d.lookups.length ? buildFacts(d) : undefined;
     const score = scoreDomain({
       domain: d.domain,
       techniques: d.techniques,
       ...(facts ? { facts } : {}),
       primaryNs: this.primaryNs,
-      ownerName: this.state.subject.owner,
-      riskyKeywords: this.state.settings.riskyKeywords,
+      ownerName: state.subject.owner,
+      riskyKeywords: state.settings.riskyKeywords,
       now: new Date(),
     });
     const { facts: _f, ...rest } = d;
@@ -291,6 +316,7 @@ export class CaseStore {
   removeTemplate(id: string): void {
     this.importedSources.delete(id);
     this.set({ ...this.state, templates: this.state.templates.filter((t) => t.id !== id) }, { templates: this.resolvedTemplates() });
+    void this.audit('user', 'template.removed', { id });
   }
 
   private resolvedTemplates(): ParsedTemplate[] {
@@ -325,25 +351,46 @@ export class CaseStore {
   async exportCase(): Promise<{ bytes: Uint8Array; fileName: string }> {
     await this.audit('user', 'case.exported', { domains: this.state.domains.length, evidence: this.state.evidence.length });
     await this.flush();
-    const out = await exportCaseZip(this.state, this.evidence, { version: APP_VERSION });
-    this.snap = { ...this.snap, dirty: false };
+    const exported = this.state;
+    const out = await exportCaseZip(exported, this.evidence, { version: APP_VERSION });
+    // Only clear "unsaved" if nothing changed while the ZIP was being built.
+    if (this.state === exported) this.snap = { ...this.snap, dirty: false };
     this.scheduleNotify();
     return { bytes: out.bytes, fileName: out.fileName };
   }
 
   async importCase(bytes: Uint8Array): Promise<void> {
-    // An in-flight audit append would otherwise write the old chain over the imported one.
     await this.flush();
     const res = await importCaseZip(bytes);
+    // A new case: drop anything still queued for the old one.
+    this.generation++;
+    await this.flush();
+    this.resetPrimaryNs();
     this.evidence = new Map([...res.evidence].map(([k, v]) => [k, new Uint8Array(v)]));
     this.importedSources.clear();
     const warnings = [...res.warnings];
+    const templates: CaseState['templates'] = [];
     for (const t of res.state.templates) {
       const v = validateImportedTemplate(t.source, t.id);
-      if (v.ok) this.importedSources.set(v.template.id, { source: t.source, template: v.template });
-      else warnings.push(`Imported template ${t.id} is invalid and was not loaded: ${v.errors.join('; ')}`);
+      if (!v.ok) {
+        warnings.push(`Imported template ${t.id} is invalid and was not loaded: ${v.errors.join('; ')}`);
+        continue;
+      }
+      if ((await sha256Hex(t.source)) !== t.sha256) warnings.push(`Imported template ${t.id}: its recorded hash does not match its text (edited outside Markwatch?).`);
+      for (const w of v.warnings) warnings.push(`Imported template ${t.id}: ${w}`);
+      this.importedSources.set(v.template.id, { source: t.source, template: v.template });
+      templates.push(t);
     }
-    this.set(res.state, { templates: this.resolvedTemplates(), importAudit: res.audit, importWarnings: warnings }, false);
+    // Acknowledgments unlock outbound templates, so only keep those the audit log records.
+    const ackedInAudit = new Set(res.state.audit.filter((a) => a.type === 'ack.recorded').map((a) => `${String(a.payload.domain)}\u0000${String(a.payload.id)}`));
+    // Facts and scores are derived data: recompute them from the (validated) lookups rather than trusting the file.
+    const imported: CaseState = { ...res.state, templates };
+    const domains = imported.domains.map((d) => {
+      const acks = d.acks.filter((a) => ackedInAudit.has(`${d.domain}\u0000${a.id}`));
+      if (acks.length !== d.acks.length) warnings.push(`${d.domain}: ${d.acks.length - acks.length} acknowledgment(s) are not in the audit log and were dropped.`);
+      return this.rescore({ ...d, acks }, imported);
+    });
+    this.set({ ...imported, domains }, { templates: this.resolvedTemplates(), importAudit: res.audit, importWarnings: warnings }, false);
     await this.audit('user', 'case.imported', { auditChainOk: res.audit.ok, ...(res.audit.ok ? {} : { brokenAt: res.audit.brokenAt }), warnings: warnings.length });
     this.snap = { ...this.snap, dirty: false };
     this.scheduleNotify();

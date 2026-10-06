@@ -3,6 +3,8 @@
 // Collector interface; the UI never calls the network directly.
 import type { Collector } from '../collect/Collector';
 import { BrowserCollector } from '../collect/BrowserCollector';
+import { HostLimiter } from '../collect/limiter';
+import { registrableNamesFromCt } from '../core/ct/crtsh';
 import { watchCspViolations } from '../collect/transport';
 import { runDiscovery, type DiscoveryOutput } from '../pipeline/discovery';
 import { resolveDomains, verifyWithRdap, type ResolveProgress } from '../pipeline/resolve';
@@ -29,12 +31,36 @@ export class Runner {
   private snap: RunSnapshot = { running: null, ct: [], ctEntries: [], manual: [] };
   private listeners = new Set<() => void>();
   private abort?: AbortController;
+  /** Certificate ids that came from user-pasted crt.sh data, so derived lookups stay labelled as manual. */
+  private manualCtIds = new Set<number>();
+  /** One limiter for the session, so crt.sh spacing and registry cooldowns survive cancel/restart. */
+  private limiter = new HostLimiter();
 
   constructor(
     private store: CaseStore,
-    private collectorFactory: (store: CaseStore) => Collector = (s) => new BrowserCollector({ primaryResolver: s.state.settings.primaryResolver }),
+    private collectorFactory?: (store: CaseStore) => Collector,
   ) {
     watchCspViolations();
+  }
+
+  private collector(): Collector {
+    return this.collectorFactory?.(this.store) ?? new BrowserCollector({ primaryResolver: this.store.state.settings.primaryResolver, limiter: this.limiter });
+  }
+
+  /** Clears run state when a different case is loaded. */
+  reset(): void {
+    this.cancel();
+    this.manualCtIds.clear();
+    this.snap = { running: null, ct: [], ctEntries: [], manual: [] };
+    for (const l of this.listeners) l();
+  }
+
+  /** Records a lookup only if the case it was started for is still loaded. */
+  private recorder(): (domains: string[], r: LookupResult<unknown>) => void {
+    const gen = this.store.generation;
+    return (domains, r) => {
+      if (this.store.generation === gen) this.store.recordLookup(domains, r);
+    };
   }
 
   subscribe = (l: () => void) => {
@@ -87,7 +113,9 @@ export class Runner {
     const { terms } = this.ctTerms();
     this.abort = new AbortController();
     this.set({ running: 'ct', error: undefined });
-    const collector = this.collectorFactory(this.store);
+    const collector = this.collector();
+    const record = this.recorder();
+    const gen = this.store.generation;
     const results: RunSnapshot['ct'] = [];
     try {
       // Prefix first (most reliable on crt.sh), then substring (best-effort).
@@ -96,12 +124,12 @@ export class Runner {
         for (const mode of ['prefix', 'substring'] as const) {
           if (this.abort.signal.aborted) break;
           const result = await collector.ctSearch(term, { signal: this.abort.signal, mode });
-          this.store.recordLookup([], result);
+          record([], result);
           results.push({ term: result.query, result });
           this.set({ ct: [...results] });
         }
       }
-      this.applyCt(results);
+      if (this.store.generation === gen) this.applyCt(results);
     } finally {
       this.set({ running: null });
     }
@@ -111,6 +139,7 @@ export class Runner {
   applyManualCt(term: string, entries: CtEntry[], pastedText: string): void {
     const result: LookupResult<CtEntry[]> = { status: 'manual', kind: 'ct', query: term, source: 'crt.sh (pasted by user)', at: nowUtc(), data: entries, pastedText };
     this.store.recordLookup([], result, 'user');
+    for (const e of entries) this.manualCtIds.add(e.id);
     const ct = [...this.snap.ct.filter((c) => c.term !== term), { term, result }];
     this.set({ ct });
     this.applyCt(ct);
@@ -125,20 +154,29 @@ export class Runner {
 
   /** Attaches each certificate to the domain records it names, so the CT signal has a source. */
   private attachCtLookups(): void {
-    const byReg = new Map<string, CtEntry[]>();
-    for (const e of this.snap.ctEntries) {
-      for (const n of e.names) {
-        const norm = normalizeDomain(n.replace(/^\*\./, ''));
-        const reg = norm && registrableDomain(norm.ascii);
-        if (reg) byReg.set(reg, [...new Set([...(byReg.get(reg) ?? []), e])]);
-      }
-    }
+    const byReg = registrableNamesFromCt(this.snap.ctEntries, (n) => {
+      const norm = normalizeDomain(n);
+      return norm ? registrableDomain(norm.ascii) : null;
+    });
     for (const [reg, list] of byReg) {
-      const domains = this.store.state.domains.filter((d) => d.registrable === reg && !d.lookups.some((l) => l.kind === 'ct' && l.query === `crt.sh certificates for ${reg}`));
+      const query = `crt.sh certificates for ${reg}`;
+      const ids = list.map((e) => e.id).sort((a, b) => a - b).join(',');
+      const domains = this.store.state.domains.filter((d) => {
+        if (d.registrable !== reg) return false;
+        // Skip only if this exact set of certificates is already attached.
+        const prev = [...d.lookups].reverse().find((l) => l.kind === 'ct' && l.query === query);
+        const prevIds = prev && (prev.status === 'ok' || prev.status === 'manual') ? (prev.data as CtEntry[]).map((e) => e.id).sort((a, b) => a - b).join(',') : null;
+        return prevIds !== ids;
+      });
       if (!domains.length) continue;
+      const manual = list.some((e) => this.manualCtIds.has(e.id));
+      const at = nowUtc();
+      const result: LookupResult<CtEntry[]> = manual
+        ? { status: 'manual', kind: 'ct', query, source: 'crt.sh (includes data pasted by the user)', at, data: list, pastedText: 'See the pasted crt.sh lookup on the Discover page and in the audit log.' }
+        : { status: 'ok', kind: 'ct', query, source: 'crt.sh', at, data: list };
       this.store.recordLookup(
         domains.map((d) => d.domain),
-        { status: 'ok', kind: 'ct', query: `crt.sh certificates for ${reg}`, source: 'crt.sh', at: nowUtc(), data: list },
+        result,
       );
     }
   }
@@ -148,14 +186,19 @@ export class Runner {
     this.abort = new AbortController();
     const signal = this.abort.signal;
     this.set({ running: 'resolve', error: undefined, progress: undefined });
-    const collector = this.collectorFactory(this.store);
+    const collector = this.collector();
     try {
       await this.resolvePrimaryNs(collector, signal);
+      const record = this.recorder();
+      const gen = this.store.generation;
       await resolveDomains(this.store.state.domains, collector, {
         signal,
         retryBlocked,
         useAbusix: this.store.state.settings.useAbusix,
-        onLookup: (domains, r) => this.store.recordLookup(domains, r),
+        onLookup: record,
+        onReuse: (domains, r) => {
+          if (this.store.generation === gen) this.store.applyExistingLookup(domains, r);
+        },
         onProgress: (progress) => this.set({ progress }),
       });
     } catch (e) {
@@ -170,7 +213,9 @@ export class Runner {
     const primary = normalizeDomain(this.store.state.subject.primaryDomain);
     const reg = primary && registrableDomain(primary.ascii);
     if (!reg) return;
+    const gen = this.store.generation;
     const r = await collector.dns(reg, 'NS', { signal });
+    if (this.store.generation !== gen) return;
     this.store.recordLookup([], r);
     if (r.status === 'ok') {
       this.store.primaryNs = nsHosts(r.data);
@@ -182,16 +227,23 @@ export class Runner {
   async verifyTop(n: number): Promise<void> {
     if (this.snap.running) return;
     const targets = this.store.state.domains
-      .filter((d) => !d.inventory && d.facts?.verdict === 'not_delegated' && !d.lookups.some((l) => l.kind === 'rdap-domain' && l.status !== 'blocked'))
+      .filter(
+        (d) =>
+          !d.inventory &&
+          (d.facts?.verdict === 'not_delegated' || d.facts?.verdict === 'probably_unregistered') &&
+          // Skip anything already answered, and TLDs without an RDAP service.
+          !d.lookups.some((l) => l.kind === 'rdap-domain' && (l.status !== 'blocked' || l.reason === 'unsupported')),
+      )
       .sort((a, b) => (b.score?.total ?? 0) - (a.score?.total ?? 0))
       .slice(0, n);
     this.abort = new AbortController();
     const signal = this.abort.signal;
     this.set({ running: 'verify', progress: undefined });
     try {
-      await verifyWithRdap(targets, this.collectorFactory(this.store), {
+      await verifyWithRdap(targets, this.collector(), {
         signal,
-        onLookup: (domains, r) => this.store.recordLookup(domains, r),
+        allRecords: this.store.state.domains,
+        onLookup: this.recorder(),
         onProgress: (progress) => this.set({ progress }),
       });
     } finally {

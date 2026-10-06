@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useCase, useServices } from '../context';
+import { useCase, useRun, useServices } from '../context';
 import { Banner, Button, Card, Mono } from '../components/ui';
 import { downloadBytes, readFileBytes } from '../download';
 
 export function CasePage() {
-  const { store } = useServices();
+  const { store, runner } = useServices();
   const { state, importAudit, importWarnings, dirty } = useCase();
+  const run = useRun();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [shown, setShown] = useState(100);
@@ -27,6 +28,7 @@ export function CasePage() {
     setBusy(true);
     setError('');
     try {
+      runner.reset();
       await store.importCase(await readFileBytes(f));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -45,11 +47,12 @@ export function CasePage() {
           <Button variant="primary" onClick={() => void doExport()} disabled={busy}>
             Export case file (.zip)
           </Button>
-          <label className="inline-block cursor-pointer rounded border border-slate-300 px-3 py-1.5 text-sm">
-            Import case file
+          <label className={run.running ? 'inline-block cursor-not-allowed rounded border border-slate-200 px-3 py-1.5 text-sm text-slate-400' : 'inline-block cursor-pointer rounded border border-slate-300 px-3 py-1.5 text-sm'}>
+            {run.running ? 'Import case file (finish or cancel the running lookup first)' : 'Import case file'}
             <input
               type="file"
               accept=".zip,application/zip"
+              disabled={!!run.running}
               className="sr-only"
               aria-label="Import case file"
               onChange={(e) => {
@@ -67,7 +70,7 @@ export function CasePage() {
               Audit log integrity check FAILED at entry {importAudit.brokenAt}: {importAudit.reason}. The case file was edited outside Markwatch, or is corrupt.
             </Banner>
           )}
-          {importAudit?.ok && <Banner level="info">Audit log hash chain verified.</Banner>}
+          {importAudit?.ok && <Banner level="info">Audit log hash chain verified: the log is internally consistent. (This detects casual edits, but someone could recompute the whole chain.)</Banner>}
           {importAudit?.warnings.map((w) => (
             <Banner key={w} level="caution">
               {w}
