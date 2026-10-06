@@ -4,6 +4,7 @@
 // Verbatim quotations of policy or statute text are the one exception to the
 // conclusion denylist, and only on a "Policy text: “…”" line whose quotation
 // is in VERIFIED_QUOTATIONS below.
+import { noteFormatErrors } from '../../../src/core/draft/export';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CONTEXT_FIELDS } from '../../../src/core/draft/context';
@@ -32,9 +33,9 @@ const VERIFIED_QUOTATIONS = [
   '(iii) your domain name has been registered and is being used in bad faith.',
 ];
 
-/** Prefix every internal note must use; the export step strips /\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g. */
+/** Prefix every internal note must use; exports strip notes from the template source (src/core/draft/export.ts). */
 const INTERNAL_NOTE_PREFIX = '[INTERNAL NOTE — DELETE BEFORE SENDING';
-const INTERNAL_NOTE_RE = /\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g;
+const INTERNAL_NOTE_RE = /\[INTERNAL NOTE — DELETE BEFORE SENDING[^[\]]*\]/g; // same pattern as export.ts
 
 /** Words that signal case strategy, which must never sit in a note inside an outbound draft. */
 const STRATEGY_WORDS = ['hijacking', 'asking price', 'negotiat', 'leverage', 'settle', 'weak', 'strategy', 'raise the price'];
@@ -123,7 +124,9 @@ describe('guard helpers (self-test, so the guards cannot pass vacuously)', () =>
   });
   it('the internal-note regex removes a well-formed note completely and exposes a nested bracket', () => {
     expect('a [INTERNAL NOTE — DELETE BEFORE SENDING: x {{y | optional}}] b'.replace(INTERNAL_NOTE_RE, '')).toBe('a  b');
-    expect('[INTERNAL NOTE — DELETE BEFORE SENDING: x [nested] tail]'.replace(INTERNAL_NOTE_RE, '')).toBe(' tail]');
+    // A nested bracket makes the note malformed: it is not stripped, and such templates are refused (noteFormatErrors).
+    expect('[INTERNAL NOTE — DELETE BEFORE SENDING: x [nested] tail]'.replace(INTERNAL_NOTE_RE, '')).toContain('INTERNAL NOTE');
+    expect(noteFormatErrors('[INTERNAL NOTE — DELETE BEFORE SENDING: x [nested] tail]')).not.toEqual([]);
   });
 });
 

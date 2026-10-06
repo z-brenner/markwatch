@@ -180,7 +180,13 @@ function DomainDetail({ rec, nav }: { rec: DomainRecord; nav: Nav }) {
             </div>
           ) : (
             <p className="text-sm text-slate-500">
-              {f?.checks?.networks === 'unavailable' ? 'Unknown: the network lookups were blocked or failed (see Lookups).' : f && f.a.length + f.aaaa.length === 0 ? 'No IP addresses to look up.' : 'Not checked yet.'}
+              {f?.checks?.networks === 'unavailable'
+                ? 'Unknown: the network lookups were blocked or failed (see Lookups).'
+                : f && f.a.length + f.aaaa.length === 0 && f.checks?.a === 'answered' && f.checks.aaaa === 'answered'
+                  ? 'No IP addresses to look up.'
+                  : f?.checks?.a === 'unavailable' || f?.checks?.aaaa === 'unavailable'
+                    ? 'Unknown: the address lookups were blocked or failed (see Lookups).'
+                    : 'Not checked yet.'}
             </p>
           )}
         </Card>

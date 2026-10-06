@@ -101,4 +101,31 @@ describe('CaseStore review regressions', () => {
     );
     await expect(store.exportCase()).resolves.toBeDefined();
   });
+
+  it('audit writes racing an import never replace the imported log', async () => {
+    const a = await CaseStore.create();
+    a.updateSubject({ marks: ['Alpha'], primaryDomain: 'alpha.com', owner: 'A', rights: [] });
+    await a.importTemplate(`---\nid: demand-letter\ntitle: Counsel letter\nchannel: letter\nclasses: cybersquatting\n---\nDRAFT. Attorney review required before sending.\nHi {{domain}}\n`, 'c.md');
+    await a.flush();
+    const { bytes } = await a.exportCase();
+    const importedHashes = a.state.audit.map((e) => e.hash);
+
+    const b = await CaseStore.create();
+    let racing = true;
+    const spam = async () => {
+      while (racing) {
+        void b.audit('system', 'settings.changed', { race: true });
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    };
+    const spammer = spam();
+    await b.importCase(bytes);
+    racing = false;
+    await spammer;
+    await b.flush();
+    // The imported history is intact as a prefix of the log.
+    expect(b.state.audit.slice(0, importedHashes.length).map((e) => e.hash)).toEqual(importedHashes);
+    expect(b.state.subject.primaryDomain).toBe('alpha.com');
+    expect((await verifyAuditChain(b.state.audit)).ok).toBe(true);
+  });
 });

@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { useCase, useServices } from '../context';
 import { Banner, Button, Input, Badge } from '../components/ui';
 import { buildDraftContext, buildEml, buildMailto, renderTemplate, BANNER } from '../../core/draft';
-import { prepareExport } from '../../core/draft/export';
+import { renderForExport } from '../../core/draft/export';
 import { downloadBytes } from '../download';
 import type { DomainRecord, DraftRecord, Route } from '../../core/types';
 
@@ -19,24 +19,20 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
   const [attach, setAttach] = useState(false);
   const [notice, setNotice] = useState('');
 
-  const result = useMemo(() => {
+  const rendered = useMemo(() => {
     if (!tpl) return null;
     const ctx = buildDraftContext(state, rec, { route });
-    return renderTemplate(
-      tpl,
-      ctx,
-      draft.values,
-      draft.dismissed.map((d) => d.field),
-    );
+    const dismissedPaths = draft.dismissed.map((d) => d.field);
+    // Preview shows internal notes; exports are rendered from the template with notes removed.
+    return { result: renderTemplate(tpl, ctx, draft.values, dismissedPaths), out: renderForExport(tpl, ctx, draft.values, dismissedPaths) };
   }, [tpl, state, rec, route, draft.values, draft.dismissed]);
+  const result = rendered?.result;
 
   if (!tpl || !result) return <Banner level="danger">Template “{draft.templateId}” is not loaded. Import it on the Templates page.</Banner>;
+  const out = rendered.out;
   const locked = !allowed.includes(draft.templateId);
-  const blocking = result.blocking || locked;
+  const blocking = result.blocking || locked || out.leak;
   const dismissedFields = draft.dismissed.map((d) => d.field);
-
-  // What actually leaves the app: internal notes removed.
-  const out = prepareExport(result.text);
 
   const setValue = (path: string, value: string) => store.updateDraft(rec.domain, draft.id, (d) => ({ ...d, values: { ...d.values, [path]: value } }));
 
@@ -48,7 +44,7 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
           return meta && bytes ? [{ name: meta.name, type: meta.type, data: bytes }] : [];
         })
       : [];
-    const eml = buildEml({ ...(state.sender.email ? { from: state.sender.email } : {}), to: result.to, subject: result.subject, body: out.text, date: new Date(), attachments });
+    const eml = buildEml({ ...(state.sender.email ? { from: state.sender.email } : {}), to: out.to, subject: out.subject, body: out.text, date: new Date(), attachments });
     downloadBytes(`${tpl.id}-${rec.domain}.eml`, eml, 'message/rfc822');
     await store.recordDraftExport(rec.domain, draft.id, 'eml', out.text, tpl.id, dismissedFields);
     setNotice('Downloaded .eml draft. Open it in your mail client; Outlook opens it as an unsent draft. Nothing was sent.');
@@ -67,7 +63,7 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
     await store.recordDraftExport(rec.domain, draft.id, 'copy', out.text, tpl.id, dismissedFields);
     setNotice('Copied to the clipboard. Note: your system clipboard may keep a history.');
   };
-  const mailto = buildMailto({ to: result.to, subject: result.subject, body: out.text });
+  const mailto = buildMailto({ to: out.to, subject: out.subject, body: out.text });
 
   return (
     <div className="rounded border border-slate-300 bg-slate-50 p-3" data-testid="draft-editor">
@@ -167,7 +163,8 @@ export function DraftEditor({ rec, draft, route, allowed }: { rec: DomainRecord;
           </label>
         )}
       </div>
-      {blocking && !locked && <p className="mt-2 text-xs text-red-700">Export is blocked until every unfilled field is filled or dismissed.</p>}
+      {out.leak && <Banner level="danger">Export is blocked: internal-note text would leave the app. Fix the template's notes (see templates/README.md).</Banner>}
+      {blocking && !locked && !out.leak && <p className="mt-2 text-xs text-red-700">Export is blocked until every unfilled field is filled or dismissed.</p>}
       {!blocking && out.removedNotes > 0 && <p className="mt-2 text-xs text-slate-600">{out.removedNotes} internal drafting note(s) shown in the preview are removed from every export.</p>}
       {!blocking && out.placeholders > 0 && (
         <Banner level="caution">

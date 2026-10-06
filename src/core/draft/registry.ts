@@ -7,6 +7,7 @@
 // (the compliance-note id, or any template listing authorized_noncompliant)
 // must be an internal, neutral note. Imports that break it are rejected, so a
 // threat template can never be attached to that class.
+import { noteFormatErrors } from './export';
 import { BUILTIN_TEMPLATE_IDS } from '../types';
 import { parseTemplate, type ParsedTemplate } from './template';
 
@@ -56,7 +57,7 @@ export function builtinTemplates(): ParsedTemplate[] {
       if (fileName(path).toLowerCase() === 'readme.md') continue;
       const r = parseTemplate(source, { builtin: true });
       if (!r.ok) throw new Error(`Built-in template ${fileName(path)} is invalid: ${r.errors.join('; ')}`);
-      const ruleErrors = complianceRuleErrors(r.template);
+      const ruleErrors = [...complianceRuleErrors(r.template), ...noteFormatErrors(source)];
       if (ruleErrors.length > 0) throw new Error(`Built-in template ${fileName(path)} is invalid: ${ruleErrors.join('; ')}`);
       out.push(r.template);
     }
@@ -79,7 +80,8 @@ export function validateImportedTemplate(source: string, name: string): { ok: tr
   if (source.includes('\u0000')) return { ok: false, errors: [`${label}: file contains NUL bytes; templates must be plain UTF-8 text`] };
   const r = parseTemplate(source, { builtin: false });
   if (!r.ok) return { ok: false, errors: r.errors.map((e) => `${label}: ${e}`) };
-  const ruleErrors = complianceRuleErrors(r.template);
+  // Malformed internal notes could leak into exports, so they are refused outright.
+  const ruleErrors = [...complianceRuleErrors(r.template), ...noteFormatErrors(source)];
   if (ruleErrors.length > 0) return { ok: false, errors: ruleErrors.map((e) => `${label}: ${e}`) };
   const warnings = r.warnings.map((w) => `${label}: ${w}`);
   const builtinIds = new Set<string>([...BUILTIN_TEMPLATE_IDS, ...builtinTemplates().map((t) => t.id)]);

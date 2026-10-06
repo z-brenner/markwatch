@@ -91,7 +91,8 @@ function parsePaste(r: LookupResult<unknown>, text: string): unknown {
         return null;
       }
     case 'abuse': {
-      const emails = [...new Set((text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((e) => e.toLowerCase()))];
+      // Capped at 100 (the case-file schema limit) so a large paste cannot make the case unexportable.
+      const emails = [...new Set((text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((e) => e.toLowerCase()))].slice(0, 100);
       return emails.length ? emails : null;
     }
     case 'ct':

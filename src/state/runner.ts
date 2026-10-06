@@ -187,10 +187,12 @@ export class Runner {
     const signal = this.abort.signal;
     this.set({ running: 'resolve', error: undefined, progress: undefined });
     const collector = this.collector();
+    // Captured once: if another case is loaded mid-run, nothing more is recorded.
+    const record = this.recorder();
+    const gen = this.store.generation;
     try {
       await this.resolvePrimaryNs(collector, signal);
-      const record = this.recorder();
-      const gen = this.store.generation;
+      if (this.store.generation !== gen) return;
       await resolveDomains(this.store.state.domains, collector, {
         signal,
         retryBlocked,

@@ -142,8 +142,10 @@ export class CaseStore {
     const gen = this.generation;
     const job = this.auditQueue.then(async () => {
       if (gen !== this.generation) return;
-      const log: AuditEntry[] = await appendAudit(this.snap.state.audit, { actor, type, payload });
-      if (gen !== this.generation) return;
+      const prev = this.snap.state.audit;
+      const log: AuditEntry[] = await appendAudit(prev, { actor, type, payload });
+      // Never write over a log that was replaced meanwhile (e.g. by an import).
+      if (gen !== this.generation || this.snap.state.audit !== prev) return;
       this.set({ ...this.snap.state, audit: log }, {}, true, true);
     });
     this.auditQueue = job.catch(() => undefined);
@@ -362,14 +364,11 @@ export class CaseStore {
   async importCase(bytes: Uint8Array): Promise<void> {
     await this.flush();
     const res = await importCaseZip(bytes);
-    // A new case: drop anything still queued for the old one.
-    this.generation++;
-    await this.flush();
-    this.resetPrimaryNs();
-    this.evidence = new Map([...res.evidence].map(([k, v]) => [k, new Uint8Array(v)]));
-    this.importedSources.clear();
+    // All async work happens before the switch below, which is synchronous, so
+    // no audit write can interleave with replacing the case.
     const warnings = [...res.warnings];
     const templates: CaseState['templates'] = [];
+    const sources = new Map<string, { source: string; template: ParsedTemplate }>();
     for (const t of res.state.templates) {
       const v = validateImportedTemplate(t.source, t.id);
       if (!v.ok) {
@@ -378,9 +377,14 @@ export class CaseStore {
       }
       if ((await sha256Hex(t.source)) !== t.sha256) warnings.push(`Imported template ${t.id}: its recorded hash does not match its text (edited outside Markwatch?).`);
       for (const w of v.warnings) warnings.push(`Imported template ${t.id}: ${w}`);
-      this.importedSources.set(v.template.id, { source: t.source, template: v.template });
+      sources.set(v.template.id, { source: t.source, template: v.template });
       templates.push(t);
     }
+    // ── synchronous switch to the new case ──
+    this.generation++;
+    this.resetPrimaryNs();
+    this.evidence = new Map([...res.evidence].map(([k, v]) => [k, new Uint8Array(v)]));
+    this.importedSources = sources;
     // Acknowledgments unlock outbound templates, so only keep those the audit log records.
     const ackedInAudit = new Set(res.state.audit.filter((a) => a.type === 'ack.recorded').map((a) => `${String(a.payload.domain)}\u0000${String(a.payload.id)}`));
     // Facts and scores are derived data: recompute them from the (validated) lookups rather than trusting the file.

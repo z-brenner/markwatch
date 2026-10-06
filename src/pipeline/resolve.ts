@@ -81,7 +81,12 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
   const plan = (domains: string[], pred: (l: AnyLookup) => boolean): { lacking: string[]; existing?: AnyLookup } | null => {
     const lacking = domains.filter((d) => !settled(latestFor(d, pred), retry));
     if (!lacking.length) return null;
-    const holder = domains.find((d) => settled(latestFor(d, pred), retry));
+    // Prefer a readable answer (e.g. a manual paste) over a settled-but-blocked one.
+    const readable = (d: string) => {
+      const l = latestFor(d, pred);
+      return !!l && l.status !== 'blocked';
+    };
+    const holder = domains.find((d) => settled(latestFor(d, pred), retry) && readable(d)) ?? domains.find((d) => settled(latestFor(d, pred), retry));
     const existing = holder ? latestFor(holder, pred) : undefined;
     return existing ? { lacking, existing } : { lacking };
   };
@@ -127,8 +132,11 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
     schedule(rdapTasks, sharers, (l) => l.kind === 'rdap-domain' && l.query === r.registrable, () => collector.rdapDomain(r.registrable, callOpts));
   }
   // Separate pools: RDAP is rate-limited per registry (2 concurrent, with
-  // cooldowns), and must not hold the DNS workers hostage.
-  await Promise.all([runTasks('enrich', dnsTasks, conc, o), runTasks('enrich', rdapTasks, 2, o, false)]);
+  // cooldowns), and must not hold the DNS workers hostage. One progress count.
+  const enrich = { done: 0, total: dnsTasks.length + rdapTasks.length };
+  o.onProgress?.({ phase: 'enrich', ...enrich });
+  const tick = () => o.onProgress?.({ phase: 'enrich', done: ++enrich.done, total: enrich.total });
+  await Promise.all([pool(dnsTasks, conc, async (t) => (await t(), tick()), o.signal), pool(rdapTasks, 2, async (t) => (await t(), tick()), o.signal)]);
   if (o.signal?.aborted) return;
 
   // ── Phase 3: networks for each unique IP ──
@@ -150,16 +158,15 @@ export async function resolveDomains(records: readonly DomainRecord[], collector
   await runTasks('network', ipTasks, conc, o);
 }
 
-async function runTasks(phase: ResolveProgress['phase'], tasks: (() => Promise<void>)[], n: number, o: ResolveOptions, report = true): Promise<void> {
+async function runTasks(phase: ResolveProgress['phase'], tasks: (() => Promise<void>)[], n: number, o: ResolveOptions): Promise<void> {
   let done = 0;
-  if (report) o.onProgress?.({ phase, done, total: tasks.length });
+  o.onProgress?.({ phase, done, total: tasks.length });
   await pool(
     tasks,
     n,
     async (t) => {
       await t();
-      done++;
-      if (report) o.onProgress?.({ phase, done, total: tasks.length });
+      o.onProgress?.({ phase, done: ++done, total: tasks.length });
     },
     o.signal,
   );

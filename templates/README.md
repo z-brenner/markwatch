@@ -144,7 +144,8 @@ Values typed by the user are not listed. Data pasted manually after a blocked lo
 - Outbound drafts state facts only. They do not state the sender's classification of the domain.
 - Notes for the user that must not be sent go inside `[INTERNAL NOTE — DELETE BEFORE SENDING: …]`:
   - Use exactly that prefix, and close the note with `]` on the same or a later line.
-  - Do not put `[` or `]` inside a note, including inside merge-field hints, because exports remove notes with the pattern `/\[INTERNAL NOTE — DELETE BEFORE SENDING[^\]]*\]/g`, which stops at the first `]`.
+  - Do not put `[` or `]` inside a note, including inside merge-field hints. Notes are removed from the template before merging, by matching from the prefix to the first `]`. Templates with malformed notes are refused on import.
+  - Exports never contain note text: anything a user types into a merge field cannot change where a note ends, and an export is refused if "INTERNAL NOTE" would survive.
   - In outbound templates (any channel except `internal`), notes hold drafting guidance only. Case strategy that would harm the mark owner if the note were sent by mistake (for example Reverse Domain Name Hijacking risk or price strategy) belongs in the internal UDRP evidence annex, not in an outbound draft.
 - The compliance note is internal and neutral and uses no legal-threat vocabulary at all.
 - Imported templates are limited to 200 KB of UTF-8 text.
